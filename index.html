@@ -637,13 +637,13 @@ async function runScan(){
     try{
       const txt=await fetchViaProxy(src);
       if(txt){
-        const titles=[...txt.matchAll(/<title>([^<]{10,200})<\/title>/g)].slice(0,12).map(m=>m[1].replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/<\![CDATA[|\]\]>/g,'').trim());
+        const titles=[...txt.matchAll(/<title>([^<]{10,200})<\/title>/g)].slice(0,12).map(m=>m[1].replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/CDATA/g,'').trim());
         if(titles.length){headlines+=titles.join('\n')+'\n';log('SCAN',`Fetched ${titles.length} headlines`);}
       }
     }catch(e){/* proxy failed silently */}
   }
   if(!headlines)log('SCAN','Proxies unavailable — Claude running on knowledge base');
-  }
+
 
   // Build date context
   const now=new Date();
