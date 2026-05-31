@@ -631,16 +631,18 @@ async function runScan(){
   updateStatusScanning();
   log('SCAN',`Scan #${STATE.scanCount+1} initiated — fetching news sources...`);
 
-  // Gather headlines via proxy
+  // Gather headlines via proxy — failures are silent, Claude runs regardless
   let headlines='';
   for(const src of SCAN_SOURCES){
-    const txt=await fetchViaProxy(src);
-    if(txt){
-      // extract title tags from RSS
-      const titles=[...txt.matchAll(/<title>([^<]{10,200})<\/title>/g)].slice(0,12).map(m=>m[1].replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/<!\[CDATA\[|\]\]>/g,'').trim());
-      headlines+=titles.join('\n')+'\n';
-      log('SCAN',`Fetched ${titles.length} headlines from source`);
-    }
+    try{
+      const txt=await fetchViaProxy(src);
+      if(txt){
+        const titles=[...txt.matchAll(/<title>([^<]{10,200})<\/title>/g)].slice(0,12).map(m=>m[1].replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/<\![CDATA[|\]\]>/g,'').trim());
+        if(titles.length){headlines+=titles.join('\n')+'\n';log('SCAN',`Fetched ${titles.length} headlines`);}
+      }
+    }catch(e){/* proxy failed silently */}
+  }
+  if(!headlines)log('SCAN','Proxies unavailable — Claude running on knowledge base');
   }
 
   // Build date context
