@@ -617,7 +617,17 @@ Each catalyst object has these exact fields:
 - probability: number 0-100 (estimated probability of positive resolution)
 - source: string (brief source description)
 
-Return EXACTLY 4 catalysts maximum. Keep thesis to 2 sentences, watchFor to 1 sentence, max 3 ripples each. Focus on HIGH and MEDIUM impact only. CRITICAL: keep total response compact so the JSON is complete and valid. Always close the array properly.`;
+Return EXACTLY 3 catalysts. Keep thesis to 2 short sentences, watchFor to 1 sentence, max 2 ripples each.
+
+CRITICAL JSON RULES — violating these breaks the system:
+- Use ONLY straight double quotes for strings. NEVER use apostrophes, curly quotes, or unescaped quotes inside string values.
+- NO line breaks inside string values. Keep each string on one line.
+- NO special characters like em-dashes, percentage signs are fine but avoid quotes inside text.
+- Write numbers for probability as plain integers (e.g. 70 not "70%").
+- Double-check every string is properly closed before the comma.
+- Keep total output under 3500 tokens so it completes fully.
+
+Focus on HIGH and MEDIUM impact only. Output ONLY the JSON array, nothing else.`;
 
 async function runScan(){
   const key=getKey();
@@ -672,6 +682,8 @@ Generate a fresh catalyst intelligence report as a JSON array.`;
     log('SCAN',`Claude responded — parsing catalysts...`);
     let catalysts=[];
     let cleaned=raw.replace(/```json\n?|```\n?/g,'').trim();
+    // Sanitize common JSON breakers: smart quotes, control chars
+    cleaned=cleaned.replace(/[\u2018\u2019]/g,"'").replace(/[\u201C\u201D]/g,'\\"').replace(/[\u2013\u2014]/g,'-').replace(/[\u0000-\u001F]/g,' ');
     try{
       catalysts=JSON.parse(cleaned);
     }catch(e){
@@ -1205,7 +1217,7 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
   document.getElementById('set-impact').value=impact;
   document.getElementById('set-sims').value=sims;
   document.getElementById('set-maxcat').value=maxcat;
-  log('LEARN','PHANTOM v1.0 initialized. Architecture: ORION proxy pattern + autonomous Claude loop + evolution engine.');
+  log('LEARN','PHANTOM v1.1-69844 initialized. JSON sanitizer + truncation repair active.');
   log('SCAN',`Monitoring ${Object.keys(STATE.watchlist).length} tickers across ${STATE.catalysts.length} active catalysts.`);
 })();
 </script>
