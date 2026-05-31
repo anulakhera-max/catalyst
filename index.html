@@ -617,7 +617,7 @@ Each catalyst object has these exact fields:
 - probability: number 0-100 (estimated probability of positive resolution)
 - source: string (brief source description)
 
-Return 3-7 catalysts. Focus on HIGH and MEDIUM impact only. Be specific and actionable.`;
+Return EXACTLY 4 catalysts maximum. Keep thesis to 2 sentences, watchFor to 1 sentence, max 3 ripples each. Focus on HIGH and MEDIUM impact only. CRITICAL: keep total response compact so the JSON is complete and valid. Always close the array properly.`;
 
 async function runScan(){
   const key=getKey();
@@ -664,22 +664,37 @@ Generate a fresh catalyst intelligence report as a JSON array.`;
     log('SCAN','Calling Claude API...');
     let raw;
     try{
-      raw=await callClaude(SCAN_PROMPT_SYSTEM, userPrompt, 2000);
+      raw=await callClaude(SCAN_PROMPT_SYSTEM, userPrompt, 4000);
     }catch(apiErr){
       log('ERROR',`Claude API error: ${apiErr.message}`);
       throw apiErr;
     }
     log('SCAN',`Claude responded — parsing catalysts...`);
     let catalysts=[];
+    let cleaned=raw.replace(/```json\n?|```\n?/g,'').trim();
     try{
-      // strip any accidental fences
-      const cleaned=raw.replace(/```json\n?|```\n?/g,'').trim();
       catalysts=JSON.parse(cleaned);
     }catch(e){
-      // try to extract array from text
-      const match=raw.match(/\[[\s\S]*\]/);
-      if(match)catalysts=JSON.parse(match[0]);
-      else{log('ERROR','Raw response: '+raw.slice(0,200));throw new Error('JSON parse failed');}
+      try{
+        const match=cleaned.match(/\[[\s\S]*\]/);
+        if(match){catalysts=JSON.parse(match[0]);}
+        else throw e;
+      }catch(e2){
+        // Truncation repair: find last complete object, close the array
+        try{
+          let s=cleaned.indexOf('[');
+          let work=cleaned.slice(s);
+          let lastBrace=work.lastIndexOf('}');
+          if(lastBrace>0){
+            let repaired=work.slice(0,lastBrace+1)+']';
+            catalysts=JSON.parse(repaired);
+            log('SCAN','Recovered '+catalysts.length+' catalysts from truncated response');
+          }else throw e2;
+        }catch(e3){
+          log('ERROR','Parse failed. Response start: '+raw.slice(0,150));
+          throw new Error('JSON parse failed after repair attempt');
+        }
+      }
     }
     if(!Array.isArray(catalysts)||!catalysts.length)throw new Error('Empty result');
 
