@@ -620,6 +620,10 @@ Each catalyst object has these exact fields:
 Return 3-7 catalysts. Focus on HIGH and MEDIUM impact only. Be specific and actionable.`;
 
 async function runScan(){
+  const key=getKey();
+  if(!key){showToast('Set API key first','warn');return}
+  if(!key.startsWith('sk-ant-')){showToast('API key format invalid — must start with sk-ant-','error');log('ERROR','Key in storage does not start with sk-ant- — check localStorage');return}
+  log('SCAN',`API key found (${key.slice(0,14)}...) — proceeding`);
   if(!getKey()){showToast('Set API key first','warn');return}
   const btn=document.getElementById('scan-btn');
   btn.textContent='SCANNING...';btn.disabled=true;
@@ -655,7 +659,15 @@ Known active situations to include if relevant: WBD/Paramount Skydance DOJ revie
 Generate a fresh catalyst intelligence report as a JSON array.`;
 
   try{
-    const raw=await callClaude(SCAN_PROMPT_SYSTEM, userPrompt, 2000);
+    log('SCAN','Calling Claude API...');
+    let raw;
+    try{
+      raw=await callClaude(SCAN_PROMPT_SYSTEM, userPrompt, 2000);
+    }catch(apiErr){
+      log('ERROR',`Claude API error: ${apiErr.message}`);
+      throw apiErr;
+    }
+    log('SCAN',`Claude responded — parsing catalysts...`);
     let catalysts=[];
     try{
       // strip any accidental fences
@@ -665,7 +677,7 @@ Generate a fresh catalyst intelligence report as a JSON array.`;
       // try to extract array from text
       const match=raw.match(/\[[\s\S]*\]/);
       if(match)catalysts=JSON.parse(match[0]);
-      else throw new Error('JSON parse failed');
+      else{log('ERROR','Raw response: '+raw.slice(0,200));throw new Error('JSON parse failed');}
     }
     if(!Array.isArray(catalysts)||!catalysts.length)throw new Error('Empty result');
 
