@@ -416,10 +416,11 @@ body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradi
       <div class="setting-row">
         <div><div class="setting-label">Auto-scan interval</div><div class="setting-sub">How often PHANTOM searches for new catalysts</div></div>
         <select class="select-ctrl" id="set-interval" onchange="saveSetting('interval',this.value)">
-          <option value="900000">Every 15 min</option>
-          <option value="1800000" selected>Every 30 min</option>
           <option value="3600000">Every hour</option>
           <option value="14400000">Every 4 hours</option>
+          <option value="21600000" selected>Every 6 hours (6am anchor)</option>
+          <option value="43200000">Every 12 hours</option>
+          <option value="86400000">Once daily (6am)</option>
         </select>
       </div>
       <div class="setting-row">
@@ -499,7 +500,7 @@ const STATE = {
   predictions: [],
   log: [],
   weights: {merger:0.80,fda:0.75,regulatory:0.70,lawsuit:0.65,investment:0.60,cancellation:0.45},
-  settings: {interval:1800000,autosim:true,evo:true,alert:true,sector:'all',impact:'MEDIUM',sims:3,maxcat:200},
+  settings: {interval:21600000,anchorHour:6,autosim:true,evo:true,alert:true,sector:'all',impact:'MEDIUM',sims:3,maxcat:200},
   evoHistory: []
 };
 
@@ -579,7 +580,7 @@ async function callClaude(systemPrompt, userPrompt, maxTokens=1200){
     method:'POST',
     headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
     body:JSON.stringify({
-      model:'claude-sonnet-4-6',
+      model:'claude-haiku-4-5-20251001',
       max_tokens:maxTokens,
       system:systemPrompt,
       messages:[{role:'user',content:userPrompt}]
@@ -885,20 +886,42 @@ function stopAutoRun(){
   if(getKey())updateStatusReady();else updateStatusIdle();
   log('SCAN','Auto-run stopped.');
 }
+function computeNextScanTime(){
+  // Clock-aligned: fire at anchorHour and every (interval) after, anchored to anchorHour
+  const interval=STATE.settings.interval;
+  const anchor=STATE.settings.anchorHour||6;
+  const now=new Date();
+  // Build today's anchor time
+  let next=new Date(now);
+  next.setHours(anchor,0,0,0);
+  // Step forward by interval until next > now
+  if(next.getTime()<=now.getTime()){
+    const stepMs=interval;
+    while(next.getTime()<=now.getTime()){
+      next=new Date(next.getTime()+stepMs);
+    }
+  }
+  return next.getTime();
+}
 function scheduleNextScan(){
   if(!STATE.running)return;
-  STATE.nextScan=Date.now()+STATE.settings.interval;
+  STATE.nextScan=computeNextScanTime();
+  const delay=STATE.nextScan-Date.now();
+  const fireAt=new Date(STATE.nextScan).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  log('SCAN',`Next auto-scan scheduled for <strong>${fireAt}</strong>`);
   STATE.scanTimer=setTimeout(()=>{
     runScan().then(()=>scheduleNextScan());
-  },STATE.settings.interval);
+  },delay);
   updateCountdown();
+  clearInterval(STATE.countdownTimer);
   STATE.countdownTimer=setInterval(updateCountdown,1000);
 }
 function updateCountdown(){
   if(!STATE.nextScan){clearInterval(STATE.countdownTimer);return}
   const rem=Math.max(0,Math.floor((STATE.nextScan-Date.now())/1000));
-  const m=Math.floor(rem/60),s=rem%60;
-  document.getElementById('m-next').textContent=`${m}:${s.toString().padStart(2,'0')}`;
+  const h=Math.floor(rem/3600),m=Math.floor((rem%3600)/60),s=rem%60;
+  const disp=h>0?`${h}h ${m}m`:`${m}:${s.toString().padStart(2,'0')}`;
+  document.getElementById('m-next').textContent=disp;
   if(rem<=0)clearInterval(STATE.countdownTimer);
 }
 function triggerManualScan(){runScan()}
@@ -1217,7 +1240,7 @@ function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
   document.getElementById('set-impact').value=impact;
   document.getElementById('set-sims').value=sims;
   document.getElementById('set-maxcat').value=maxcat;
-  log('LEARN','PHANTOM v1.1-69844 initialized. JSON sanitizer + truncation repair active.');
+  log('LEARN','PHANTOM v1.2 initialized. Haiku 4.5 + 6h scheduled scans (6am anchor).');
   log('SCAN',`Monitoring ${Object.keys(STATE.watchlist).length} tickers across ${STATE.catalysts.length} active catalysts.`);
 })();
 </script>
