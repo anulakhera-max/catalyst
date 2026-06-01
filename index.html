@@ -1,0 +1,1653 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CATALYST — Autonomous Catalyst Intelligence</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Syne:wght@400;600;700;800&family=Syne+Mono&display=swap');
+
+:root {
+  --bg: #080c0f;
+  --surface: #0d1318;
+  --surface2: #111820;
+  --border: #1a2530;
+  --border2: #243040;
+  --accent: #00d4ff;
+  --accent2: #ff6b35;
+  --accent3: #39ff14;
+  --warn: #ffcc00;
+  --danger: #ff3860;
+  --muted: #3a5060;
+  --text: #c8dde8;
+  --text2: #6a8fa0;
+  --text3: #3a5a6a;
+  --up: #39ff14;
+  --dn: #ff3860;
+  --neutral: #ffcc00;
+  --font-mono: 'Share Tech Mono', monospace;
+  --font-head: 'Syne', sans-serif;
+}
+
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{background:var(--bg);color:var(--text);font-family:var(--font-mono);font-size:13px;min-height:100vh;overflow-x:hidden}
+
+/* SCAN GRID OVERLAY */
+body::before{content:'';position:fixed;inset:0;background:repeating-linear-gradient(0deg,transparent,transparent 39px,rgba(0,212,255,0.015) 40px),repeating-linear-gradient(90deg,transparent,transparent 39px,rgba(0,212,255,0.015) 40px);pointer-events:none;z-index:0}
+
+.shell{position:relative;z-index:1;max-width:1400px;margin:0 auto;padding:0 16px 80px}
+
+/* ── HEADER ── */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:18px 0 14px;border-bottom:1px solid var(--border2);margin-bottom:20px;flex-wrap:wrap;gap:10px}
+.hdr-left{display:flex;align-items:center;gap:16px}
+.logo{font-family:var(--font-head);font-size:22px;font-weight:800;letter-spacing:.08em;color:#fff}
+.logo span{color:var(--accent)}
+.tagline{font-size:10px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase;margin-top:2px}
+.status-pod{display:flex;align-items:center;gap:8px;font-size:11px}
+.pulse{width:8px;height:8px;border-radius:50%;background:var(--accent3);box-shadow:0 0 8px var(--accent3);animation:blink 1.4s infinite}
+.pulse.idle{background:var(--warn);box-shadow:0 0 8px var(--warn)}
+.pulse.dead{background:var(--muted);box-shadow:none;animation:none}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+.status-text{color:var(--text2)}
+.status-text strong{color:var(--accent3)}
+.hdr-right{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+
+/* ── CONTROLS ── */
+.btn{font-family:var(--font-mono);font-size:11px;padding:6px 14px;border:1px solid var(--border2);background:transparent;color:var(--text2);cursor:pointer;letter-spacing:.08em;text-transform:uppercase;transition:all .15s}
+.btn:hover{border-color:var(--accent);color:var(--accent);background:rgba(0,212,255,.06)}
+.btn.primary{border-color:var(--accent);color:var(--accent)}
+.btn.danger{border-color:var(--danger);color:var(--danger)}
+.btn.running{border-color:var(--accent3);color:var(--accent3);animation:pulse-btn 1s infinite}
+@keyframes pulse-btn{0%,100%{box-shadow:none}50%{box-shadow:0 0 12px rgba(57,255,20,.3)}}
+.btn:disabled{opacity:.3;cursor:not-allowed}
+
+/* ── METRICS BAR ── */
+.metrics{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:1px;background:var(--border);margin-bottom:20px}
+.mc{background:var(--surface);padding:12px 14px}
+.mc-label{font-size:9px;color:var(--text3);letter-spacing:.15em;text-transform:uppercase;margin-bottom:4px}
+.mc-val{font-size:22px;font-weight:700;font-family:var(--font-head);color:#fff;line-height:1}
+.mc-sub{font-size:9px;color:var(--text3);margin-top:3px}
+.mc-val.up{color:var(--up)}
+.mc-val.dn{color:var(--dn)}
+.mc-val.warn{color:var(--warn)}
+.mc-val.accent{color:var(--accent)}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--border2);margin-bottom:20px;overflow-x:auto}
+.tab{font-family:var(--font-mono);font-size:11px;padding:9px 18px;border:none;background:transparent;color:var(--text3);cursor:pointer;letter-spacing:.1em;text-transform:uppercase;border-bottom:2px solid transparent;white-space:nowrap}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent)}
+.tab:hover:not(.active){color:var(--text)}
+.tab-badge{font-size:9px;background:var(--accent);color:var(--bg);border-radius:2px;padding:1px 5px;margin-left:5px;vertical-align:1px}
+.tab-badge.warn{background:var(--warn)}
+.tab-badge.up{background:var(--up)}
+
+/* ── PANELS ── */
+.panel{display:none}
+.panel.active{display:block}
+
+/* ── KEY SETUP ── */
+.key-banner{background:var(--surface);border:1px solid var(--border2);padding:20px;margin-bottom:20px;display:flex;align-items:center;gap:14px}
+.key-banner.hidden{display:none}
+.key-icon{font-size:24px;flex-shrink:0}
+.key-text{flex:1}
+.key-text h3{font-family:var(--font-head);font-size:14px;color:#fff;margin-bottom:4px}
+.key-text p{font-size:11px;color:var(--text2);line-height:1.6}
+.key-input{display:flex;gap:8px;margin-top:10px}
+.key-input input{flex:1;background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:12px;padding:8px 12px}
+.key-input input:focus{outline:none;border-color:var(--accent)}
+
+/* ── CATALYST CARDS ── */
+.section-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap;gap:8px}
+.section-title{font-size:10px;color:var(--text3);letter-spacing:.2em;text-transform:uppercase}
+.section-count{font-size:10px;color:var(--text3)}
+.cat-grid{display:grid;gap:8px}
+.cat-card{background:var(--surface);border:1px solid var(--border);padding:14px 16px;transition:border-color .15s;position:relative;overflow:hidden}
+.cat-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.cat-card.HIGH::before{background:var(--dn)}
+.cat-card.MEDIUM::before{background:var(--warn)}
+.cat-card.LOW::before{background:var(--up)}
+.cat-card:hover{border-color:var(--border2)}
+.cat-card.expanded{border-color:var(--accent)}
+.cat-top{display:flex;align-items:flex-start;gap:12px;cursor:pointer}
+.cat-type{font-size:9px;letter-spacing:.15em;padding:3px 8px;border:1px solid;text-transform:uppercase;flex-shrink:0;margin-top:1px}
+.type-approval{border-color:rgba(57,255,20,.4);color:var(--up)}
+.type-lawsuit{border-color:rgba(255,56,96,.4);color:var(--dn)}
+.type-merger{border-color:rgba(255,204,0,.4);color:var(--warn)}
+.type-acquisition{border-color:rgba(255,107,53,.4);color:var(--accent2)}
+.type-fda{border-color:rgba(0,212,255,.4);color:var(--accent)}
+.type-regulatory{border-color:rgba(180,140,255,.4);color:#b48cff}
+.type-investment{border-color:rgba(57,255,20,.4);color:var(--up)}
+.type-permit{border-color:rgba(255,204,0,.4);color:var(--warn)}
+.type-cancellation{border-color:rgba(255,56,96,.4);color:var(--dn)}
+.cat-main{flex:1;min-width:0}
+.cat-title{font-family:var(--font-head);font-size:13px;font-weight:600;color:#fff;margin-bottom:4px;line-height:1.3}
+.cat-tickers{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:4px}
+.ticker{font-size:10px;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);color:var(--accent);padding:1px 7px}
+.cat-meta{font-size:10px;color:var(--text3)}
+.cat-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.dir-tag{font-size:11px;font-weight:700;letter-spacing:.06em}
+.dir-up{color:var(--up)}
+.dir-dn{color:var(--dn)}
+.dir-neutral{color:var(--warn)}
+.impact-tag{font-size:9px;letter-spacing:.12em;color:var(--text3)}
+.impact-HIGH{color:var(--dn)}
+.impact-MEDIUM{color:var(--warn)}
+.impact-LOW{color:var(--up)}
+.tf-tag{font-size:9px;color:var(--text3)}
+.cat-expand{display:none;margin-top:14px;border-top:1px solid var(--border);padding-top:14px}
+.cat-card.expanded .cat-expand{display:block}
+.exp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}
+.exp-block{background:var(--bg);border:1px solid var(--border);padding:10px}
+.exp-label{font-size:9px;color:var(--text3);letter-spacing:.15em;text-transform:uppercase;margin-bottom:5px}
+.exp-val{font-size:11px;color:var(--text);line-height:1.7}
+.sim-result{background:var(--bg);border:1px solid var(--border2);padding:10px;margin-bottom:10px}
+.sim-label{font-size:9px;color:var(--text3);letter-spacing:.15em;text-transform:uppercase;margin-bottom:8px}
+.sim-scenarios{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.sim-s{padding:8px;border:1px solid}
+.sim-pass{border-color:rgba(57,255,20,.3);background:rgba(57,255,20,.04)}
+.sim-fail{border-color:rgba(255,56,96,.3);background:rgba(255,56,96,.04)}
+.sim-s-label{font-size:9px;letter-spacing:.1em;margin-bottom:4px}
+.sim-pass .sim-s-label{color:var(--up)}
+.sim-fail .sim-s-label{color:var(--dn)}
+.sim-s-val{font-size:11px;line-height:1.5}
+.sim-pass .sim-s-val{color:rgba(57,255,20,.8)}
+.sim-fail .sim-s-val{color:rgba(255,56,96,.8)}
+.ripple-row{margin-bottom:10px}
+.ripple-label{font-size:9px;color:var(--text3);letter-spacing:.15em;text-transform:uppercase;margin-bottom:6px}
+.ripple-chips{display:flex;flex-wrap:wrap;gap:5px}
+.rchip{font-size:10px;border:1px solid var(--border2);padding:3px 9px;color:var(--text2)}
+.rchip strong{color:var(--text)}
+.cat-actions{display:flex;gap:6px;flex-wrap:wrap}
+.cat-btn{font-family:var(--font-mono);font-size:10px;padding:5px 12px;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;letter-spacing:.06em;text-transform:uppercase}
+.cat-btn:hover{border-color:var(--accent);color:var(--accent)}
+.scanning-overlay{display:none;position:absolute;inset:0;background:rgba(8,12,15,.85);align-items:center;justify-content:center;font-size:10px;color:var(--accent);letter-spacing:.15em}
+.cat-card.scanning .scanning-overlay{display:flex}
+.scan-anim::after{content:'';animation:dots 1.2s infinite}
+@keyframes dots{0%{content:''}33%{content:'.'}66%{content:'..'}100%{content:'...'}}
+
+/* ── SIM ENGINE ── */
+.sim-engine{background:var(--surface);border:1px solid var(--border);padding:16px;margin-bottom:16px}
+.sim-hdr{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.sim-title{font-size:10px;color:var(--text3);letter-spacing:.2em;text-transform:uppercase}
+.sim-controls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.sim-table{width:100%;border-collapse:collapse}
+.sim-table th{font-size:9px;color:var(--text3);letter-spacing:.15em;text-transform:uppercase;text-align:left;padding:6px 8px;border-bottom:1px solid var(--border)}
+.sim-table td{font-size:11px;padding:7px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+.sim-table tr:hover td{background:rgba(0,212,255,.03)}
+.sim-badge{font-size:9px;padding:2px 7px;letter-spacing:.08em;text-transform:uppercase}
+.sim-running{background:rgba(0,212,255,.1);color:var(--accent);animation:pulse-btn .8s infinite}
+.sim-complete{background:rgba(57,255,20,.1);color:var(--up)}
+.sim-queued{background:rgba(58,80,96,.3);color:var(--text3)}
+.prob-bar{height:4px;background:var(--border);width:80px;display:inline-block;vertical-align:middle;margin-left:6px}
+.prob-fill{height:100%;background:var(--accent);transition:width .5s}
+
+/* ── LEARNING LOG ── */
+.log-stream{background:var(--bg);border:1px solid var(--border);height:360px;overflow-y:auto;padding:12px;font-size:11px;line-height:1.8;font-family:var(--font-mono)}
+.log-line{display:flex;gap:10px;margin-bottom:2px}
+.log-ts{color:var(--text3);flex-shrink:0;min-width:80px}
+.log-tag{flex-shrink:0;min-width:72px;font-size:9px;letter-spacing:.1em;text-transform:uppercase}
+.log-tag.SCAN{color:var(--accent)}
+.log-tag.SIM{color:#b48cff}
+.log-tag.LEARN{color:var(--up)}
+.log-tag.ALERT{color:var(--warn)}
+.log-tag.ERROR{color:var(--dn)}
+.log-tag.EVOLVE{color:var(--accent2)}
+.log-msg{color:var(--text2);flex:1}
+.log-msg strong{color:var(--text)}
+
+/* ── WATCHLIST ── */
+.watch-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.watch-card{background:var(--surface);border:1px solid var(--border);padding:12px}
+.watch-ticker{font-family:var(--font-head);font-size:16px;font-weight:700;color:#fff;margin-bottom:3px}
+.watch-sector{font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px}
+.watch-catalysts{font-size:10px;color:var(--text2);line-height:1.6}
+.watch-heat{height:2px;margin-top:8px}
+.heat-high{background:linear-gradient(90deg,var(--dn),transparent)}
+.heat-med{background:linear-gradient(90deg,var(--warn),transparent)}
+.heat-low{background:linear-gradient(90deg,var(--up),transparent)}
+
+/* ── SETTINGS ── */
+.settings-block{background:var(--surface);border:1px solid var(--border);padding:16px;margin-bottom:12px}
+.settings-title{font-size:10px;color:var(--text3);letter-spacing:.18em;text-transform:uppercase;margin-bottom:12px}
+.setting-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid var(--border)}
+.setting-row:last-child{border-bottom:none}
+.setting-label{font-size:12px;color:var(--text)}
+.setting-sub{font-size:10px;color:var(--text3);margin-top:2px}
+.toggle{position:relative;width:36px;height:20px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;inset:0;background:var(--border2);cursor:pointer;transition:.3s}
+.toggle-slider::before{content:'';position:absolute;height:14px;width:14px;left:3px;bottom:3px;background:var(--text3);transition:.3s}
+.toggle input:checked+.toggle-slider{background:rgba(0,212,255,.3);border:1px solid var(--accent)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(16px);background:var(--accent)}
+.select-ctrl{background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:5px 10px}
+.num-ctrl{background:var(--bg);border:1px solid var(--border2);color:var(--text);font-family:var(--font-mono);font-size:11px;padding:5px 10px;width:70px}
+
+/* ── EVOLUTION PANEL ── */
+.evo-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:16px}
+.evo-block{background:var(--surface);border:1px solid var(--border);padding:14px}
+.evo-title{font-size:9px;color:var(--text3);letter-spacing:.18em;text-transform:uppercase;margin-bottom:10px}
+.evo-item{display:flex;align-items:center;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--border)}
+.evo-item:last-child{border-bottom:none}
+.evo-name{font-size:11px;color:var(--text2)}
+.evo-score{font-size:11px;font-weight:700}
+.evo-pos{color:var(--up)}
+.evo-neg{color:var(--dn)}
+.evo-bar-wrap{width:60px;height:3px;background:var(--border);margin-left:8px}
+.evo-bar{height:100%;transition:width .5s}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--border2)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;background:var(--surface2);border:1px solid var(--accent);color:var(--accent);font-size:11px;padding:10px 16px;letter-spacing:.08em;z-index:999;transform:translateY(80px);opacity:0;transition:all .25s}
+.toast.show{transform:translateY(0);opacity:1}
+.toast.warn{border-color:var(--warn);color:var(--warn)}
+.toast.error{border-color:var(--dn);color:var(--dn)}
+
+/* ── LOADING ── */
+.loading-bar{height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);width:0%;transition:width .4s;margin-bottom:20px}
+.loading-bar.active{animation:sweep 1.2s infinite}
+@keyframes sweep{0%{width:0%;margin-left:0}50%{width:60%}100%{width:0%;margin-left:100%}}
+
+/* ── EMPTY STATES ── */
+.empty{text-align:center;padding:48px 20px;color:var(--text3);font-size:11px;letter-spacing:.08em}
+.empty-icon{font-size:36px;margin-bottom:12px;opacity:.3}
+
+/* ── EARNINGS ── */
+.earn-bucket{margin-bottom:24px}
+.earn-bucket-hdr{display:flex;align-items:center;gap:10px;margin-bottom:10px;padding-bottom:6px;border-bottom:1px solid var(--border2)}
+.earn-bucket-title{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--accent)}
+.earn-bucket-count{font-size:10px;color:var(--text3)}
+.earn-card{background:var(--surface);border:1px solid var(--border);padding:14px 16px;margin-bottom:8px;position:relative;overflow:hidden}
+.earn-card::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px}
+.earn-card.LONG::before{background:var(--up)}
+.earn-card.SHORT::before{background:var(--dn)}
+.earn-card.NEUTRAL::before{background:var(--warn)}
+.earn-top{display:flex;align-items:flex-start;gap:12px;cursor:pointer}
+.earn-ticker-box{display:flex;flex-direction:column;align-items:center;min-width:64px;flex-shrink:0}
+.earn-ticker{font-family:var(--font-head);font-size:18px;font-weight:700;color:#fff}
+.earn-date{font-size:9px;color:var(--text3);margin-top:2px;letter-spacing:.05em}
+.earn-main{flex:1;min-width:0}
+.earn-name{font-size:12px;color:var(--text2);margin-bottom:6px}
+.earn-prices{display:flex;gap:14px;flex-wrap:wrap}
+.earn-price-item{display:flex;flex-direction:column}
+.earn-price-label{font-size:8px;color:var(--text3);letter-spacing:.12em;text-transform:uppercase}
+.earn-price-val{font-size:13px;font-weight:600;font-family:var(--font-head)}
+.earn-price-val.current{color:var(--text)}
+.earn-price-val.target{color:var(--up)}
+.earn-price-val.entry{color:var(--accent)}
+.earn-price-val.stop{color:var(--dn)}
+.earn-right{display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex-shrink:0}
+.earn-dir{font-size:12px;font-weight:700;letter-spacing:.06em}
+.earn-dir.LONG{color:var(--up)}
+.earn-dir.SHORT{color:var(--dn)}
+.earn-dir.NEUTRAL{color:var(--warn)}
+.earn-conf{font-size:9px;color:var(--text3)}
+.earn-vol{font-size:9px;letter-spacing:.1em}
+.earn-vol.HIGH{color:var(--dn)}
+.earn-vol.MED{color:var(--warn)}
+.earn-expand{display:none;margin-top:12px;border-top:1px solid var(--border);padding-top:12px}
+.earn-card.expanded .earn-expand{display:block}
+.earn-thesis{font-size:11px;color:var(--text);line-height:1.7;background:var(--bg);border:1px solid var(--border);padding:10px;margin-bottom:10px}
+.earn-rr{display:flex;gap:14px;margin-bottom:10px;flex-wrap:wrap}
+.earn-rr-item{font-size:10px;color:var(--text3)}
+.earn-rr-item strong{color:var(--text);font-size:12px}
+.earn-actions{display:flex;gap:6px;flex-wrap:wrap}
+.earn-btn{font-family:var(--font-mono);font-size:10px;padding:5px 12px;border:1px solid var(--border2);background:transparent;color:var(--text3);cursor:pointer;letter-spacing:.06em;text-transform:uppercase}
+.earn-btn:hover{border-color:var(--accent);color:var(--accent)}
+.earn-btn.win:hover{border-color:var(--up);color:var(--up)}
+.earn-btn.loss:hover{border-color:var(--dn);color:var(--dn)}
+.earn-resolved{font-size:9px;padding:2px 8px;letter-spacing:.08em;text-transform:uppercase}
+.earn-resolved.win{background:rgba(57,255,20,.1);color:var(--up)}
+.earn-resolved.loss{background:rgba(255,56,96,.1);color:var(--dn)}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <!-- HEADER -->
+  <div class="hdr">
+    <div class="hdr-left">
+      <div>
+        <div class="logo">CATALYST <span>INTEL</span></div>
+        <div class="tagline">Autonomous Catalyst Intelligence · Always Watching</div>
+      </div>
+      <div class="status-pod">
+        <div class="pulse idle" id="pulse-dot"></div>
+        <span class="status-text" id="status-text">STANDBY — <strong>Set API key to activate</strong></span>
+      </div>
+    </div>
+    <div class="hdr-right">
+      <button class="btn" onclick="triggerManualScan()" id="scan-btn">⟳ SCAN NOW</button>
+      <button class="btn primary" onclick="toggleAutoRun()" id="auto-btn">▶ AUTO-RUN</button>
+      <button class="btn danger" onclick="clearAll()">✕ RESET</button>
+    </div>
+  </div>
+
+  <!-- API KEY BANNER -->
+  <div class="key-banner" id="key-banner">
+    <div class="key-icon">⚡</div>
+    <div class="key-text">
+      <h3>Anthropic API Key Required</h3>
+      <p>CATALYST uses the Claude API client-side (same pattern as ORION). Your key stays in localStorage only — never transmitted anywhere except directly to Anthropic. Once set, the system autonomously scans, simulates, and learns.</p>
+      <div class="key-input">
+        <input type="password" id="api-key-input" placeholder="sk-ant-..." autocomplete="off">
+        <button class="btn primary" onclick="saveKey()">ACTIVATE</button>
+        <button class="btn" onclick="clearKey()">CLEAR</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LOADING BAR -->
+  <div class="loading-bar" id="loading-bar"></div>
+
+  <!-- METRICS -->
+  <div class="metrics" id="metrics-row">
+    <div class="mc"><div class="mc-label">Catalysts Tracked</div><div class="mc-val accent" id="m-total">0</div><div class="mc-sub">across all types</div></div>
+    <div class="mc"><div class="mc-label">Simulations Run</div><div class="mc-val" id="m-sims">0</div><div class="mc-sub">total scenarios</div></div>
+    <div class="mc"><div class="mc-label">High Impact Active</div><div class="mc-val dn" id="m-high">0</div><div class="mc-sub">needs attention</div></div>
+    <div class="mc"><div class="mc-label">Bullish Signals</div><div class="mc-val up" id="m-bull">0</div><div class="mc-sub">directional ↑</div></div>
+    <div class="mc"><div class="mc-label">Bearish Signals</div><div class="mc-val dn" id="m-bear">0</div><div class="mc-sub">directional ↓</div></div>
+    <div class="mc"><div class="mc-label">Prediction Accuracy</div><div class="mc-val warn" id="m-acc">—</div><div class="mc-sub">resolved calls</div></div>
+    <div class="mc"><div class="mc-label">Next Auto-Scan</div><div class="mc-val accent" id="m-next">—</div><div class="mc-sub">countdown</div></div>
+    <div class="mc"><div class="mc-label">Evolution Cycle</div><div class="mc-val" id="m-evo">1</div><div class="mc-sub">learning generation</div></div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('catalysts',this)">CATALYSTS <span class="tab-badge warn" id="tab-cat-count">0</span></button>
+    <button class="tab" onclick="showTab('simulations',this)">SIMULATIONS <span class="tab-badge" id="tab-sim-count">0</span></button>
+    <button class="tab" onclick="showTab('watchlist',this)">WATCHLIST <span class="tab-badge up" id="tab-watch-count">0</span></button>
+    <button class="tab" onclick="showTab('earnings',this)">EARNINGS <span class="tab-badge warn" id="tab-earn-count">0</span></button>
+    <button class="tab" onclick="showTab('learning',this)">LEARNING LOG</button>
+    <button class="tab" onclick="showTab('evolution',this)">EVOLUTION</button>
+    <button class="tab" onclick="showTab('settings',this)">SETTINGS</button>
+  </div>
+
+  <!-- ═══ CATALYSTS PANEL ═══ -->
+  <div class="panel active" id="panel-catalysts">
+    <div class="section-hdr">
+      <span class="section-title">Live Catalyst Feed</span>
+      <span class="section-count" id="cat-last-scan">No scan yet</span>
+    </div>
+    <div class="cat-grid" id="cat-grid">
+      <div class="empty"><div class="empty-icon">◎</div>No catalysts loaded yet.<br>Set your API key and click SCAN NOW or enable AUTO-RUN.</div>
+    </div>
+  </div>
+
+  <!-- ═══ SIMULATIONS PANEL ═══ -->
+  <div class="panel" id="panel-simulations">
+    <div class="sim-engine">
+      <div class="sim-hdr">
+        <span class="sim-title">Simulation Engine · Monte Carlo + Scenario Analysis</span>
+        <div class="sim-controls">
+          <button class="btn" onclick="runAllSims()">▶ RUN ALL PENDING</button>
+          <button class="btn" onclick="exportSims()">↓ EXPORT</button>
+        </div>
+      </div>
+      <table class="sim-table" id="sim-table">
+        <thead><tr>
+          <th>Catalyst</th><th>Type</th><th>Tickers</th><th>Pass Move</th><th>Fail Move</th><th>Prob</th><th>EV</th><th>Status</th>
+        </tr></thead>
+        <tbody id="sim-tbody">
+          <tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px">No simulations yet. Run a catalyst scan first.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ═══ WATCHLIST PANEL ═══ -->
+  <div class="panel" id="panel-watchlist">
+    <div class="section-hdr">
+      <span class="section-title">Catalyst Watchlist · Monitored Tickers</span>
+      <button class="btn" onclick="addWatchTicker()">+ ADD TICKER</button>
+    </div>
+    <div class="watch-grid" id="watch-grid">
+      <div class="empty" style="grid-column:1/-1"><div class="empty-icon">◎</div>No tickers being watched.<br>Catalysts are auto-added when detected.</div>
+    </div>
+  </div>
+
+  <!-- ═══ EARNINGS PANEL ═══ -->
+  <div class="panel" id="panel-earnings">
+    <div class="section-hdr">
+      <span class="section-title">Earnings Trade Engine · Next 21 Days</span>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="section-count" id="earn-last-scan">No scan yet</span>
+        <button class="btn primary" onclick="runEarningsScan()" id="earn-scan-btn">⟳ SCAN EARNINGS</button>
+      </div>
+    </div>
+    <div id="earn-buckets">
+      <div class="empty"><div class="empty-icon">◷</div>No earnings analysis yet.<br>Click SCAN EARNINGS to find high-volume volatile stocks reporting in the next 7 / 14 / 21 days.</div>
+    </div>
+  </div>
+
+  <!-- ═══ LEARNING LOG PANEL ═══ -->
+  <div class="panel" id="panel-learning">
+    <div class="section-hdr">
+      <span class="section-title">Learning Log · System Activity Stream</span>
+      <div style="display:flex;gap:8px">
+        <button class="btn" onclick="clearLog()">CLEAR</button>
+        <button class="btn" onclick="exportLog()">↓ EXPORT</button>
+      </div>
+    </div>
+    <div class="log-stream" id="log-stream">
+      <div class="log-line"><span class="log-ts">--:--:--</span><span class="log-tag LEARN">INIT</span><span class="log-msg">CATALYST initialized. Set API key to begin autonomous operation.</span></div>
+    </div>
+  </div>
+
+  <!-- ═══ EVOLUTION PANEL ═══ -->
+  <div class="panel" id="panel-evolution">
+    <div class="evo-grid">
+      <div class="evo-block">
+        <div class="evo-title">Signal Weight Scores · Learned Accuracy</div>
+        <div id="evo-signals">
+          <div class="evo-item"><span class="evo-name">Merger / Acquisition signals</span><span class="evo-score evo-pos" id="ew-merger">0.80</span></div>
+          <div class="evo-item"><span class="evo-name">FDA / Approval signals</span><span class="evo-score evo-pos" id="ew-fda">0.75</span></div>
+          <div class="evo-item"><span class="evo-name">Regulatory / DOJ signals</span><span class="evo-score evo-pos" id="ew-reg">0.70</span></div>
+          <div class="evo-item"><span class="evo-name">Lawsuit settlement signals</span><span class="evo-score evo-pos" id="ew-law">0.65</span></div>
+          <div class="evo-item"><span class="evo-name">Investment / permit signals</span><span class="evo-score evo-pos" id="ew-inv">0.60</span></div>
+          <div class="evo-item"><span class="evo-name">Cancellation signals</span><span class="evo-score evo-neg" id="ew-can">0.45</span></div>
+        </div>
+      </div>
+      <div class="evo-block">
+        <div class="evo-title">Prediction Track Record</div>
+        <div id="evo-track">
+          <div class="evo-item"><span class="evo-name">Total predictions</span><span class="evo-score" id="et-total">0</span></div>
+          <div class="evo-item"><span class="evo-name">Resolved</span><span class="evo-score" id="et-resolved">0</span></div>
+          <div class="evo-item"><span class="evo-name">Wins</span><span class="evo-score evo-pos" id="et-wins">0</span></div>
+          <div class="evo-item"><span class="evo-name">Losses</span><span class="evo-score evo-neg" id="et-losses">0</span></div>
+          <div class="evo-item"><span class="evo-name">Win rate</span><span class="evo-score evo-pos" id="et-wr">—</span></div>
+          <div class="evo-item"><span class="evo-name">Avg expected value</span><span class="evo-score" id="et-ev">—</span></div>
+        </div>
+      </div>
+    </div>
+    <div class="evo-block">
+      <div class="evo-title">Evolution History · Learning Cycles</div>
+      <div id="evo-history" style="font-size:11px;color:var(--text2);line-height:1.8">
+        <div style="color:var(--text3)">No evolution cycles completed yet. System learns after each resolved prediction.</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ═══ SETTINGS PANEL ═══ -->
+  <div class="panel" id="panel-settings">
+    <div class="settings-block">
+      <div class="settings-title">Autonomous Operation</div>
+      <div class="setting-row">
+        <div><div class="setting-label">Auto-scan interval</div><div class="setting-sub">How often CATALYST searches for new catalysts</div></div>
+        <select class="select-ctrl" id="set-interval" onchange="saveSetting('interval',this.value)">
+          <option value="3600000">Every hour</option>
+          <option value="14400000">Every 4 hours</option>
+          <option value="21600000" selected>Every 6 hours (6am anchor)</option>
+          <option value="43200000">Every 12 hours</option>
+          <option value="86400000">Once daily (6am)</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Auto-simulate on discovery</div><div class="setting-sub">Run scenario simulations immediately after each catalyst is found</div></div>
+        <label class="toggle"><input type="checkbox" id="set-autosim" onchange="saveSetting('autosim',this.checked)" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Evolution learning</div><div class="setting-sub">Update signal weights based on resolved predictions</div></div>
+        <label class="toggle"><input type="checkbox" id="set-evo" onchange="saveSetting('evo',this.checked)" checked><span class="toggle-slider"></span></label>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Alert on HIGH impact</div><div class="setting-sub">Show toast notification when high-impact catalyst is detected</div></div>
+        <label class="toggle"><input type="checkbox" id="set-alert" onchange="saveSetting('alert',this.checked)" checked><span class="toggle-slider"></span></label>
+      </div>
+    </div>
+    <div class="settings-block">
+      <div class="settings-title">Scan Configuration</div>
+      <div class="setting-row">
+        <div><div class="setting-label">Focus sectors</div><div class="setting-sub">Which sectors CATALYST prioritizes</div></div>
+        <select class="select-ctrl" id="set-sector" onchange="saveSetting('sector',this.value)">
+          <option value="all">All sectors</option>
+          <option value="tech">Tech + AI</option>
+          <option value="biotech">Biotech + Pharma</option>
+          <option value="media">Media + Streaming</option>
+          <option value="energy">Energy + Resources</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Min impact threshold</div><div class="setting-sub">Only log catalysts at or above this impact level</div></div>
+        <select class="select-ctrl" id="set-impact" onchange="saveSetting('impact',this.checked)">
+          <option value="LOW">All (Low+)</option>
+          <option value="MEDIUM" selected>Medium+</option>
+          <option value="HIGH">High only</option>
+        </select>
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Simulations per catalyst</div><div class="setting-sub">Number of Monte Carlo scenarios per catalyst</div></div>
+        <input type="number" class="num-ctrl" id="set-sims" value="3" min="1" max="10" onchange="saveSetting('sims',this.value)">
+      </div>
+    </div>
+    <div class="settings-block">
+      <div class="settings-title">Data Management</div>
+      <div class="setting-row">
+        <div><div class="setting-label">Max catalysts stored</div><div class="setting-sub">Auto-prune oldest when limit reached</div></div>
+        <input type="number" class="num-ctrl" id="set-maxcat" value="200" min="50" max="500" onchange="saveSetting('maxcat',this.value)">
+      </div>
+      <div class="setting-row">
+        <div><div class="setting-label">Export all data</div><div class="setting-sub">Download complete dataset as JSON</div></div>
+        <button class="btn" onclick="exportAll()">↓ EXPORT JSON</button>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /shell -->
+
+<div class="toast" id="toast"></div>
+
+<script>
+// ═══════════════════════════════════════════════
+// CATALYST — AUTONOMOUS CATALYST INTELLIGENCE
+// Architecture: ORION pattern (client-side Claude
+// API key, CORS proxy failover, localStorage state)
+// ═══════════════════════════════════════════════
+
+// ── STATE ──────────────────────────────────────
+const STATE = {
+  running: false,
+  scanTimer: null,
+  countdownTimer: null,
+  nextScan: null,
+  scanCount: 0,
+  simCount: 0,
+  evoCycle: 1,
+  catalysts: [],
+  simulations: [],
+  watchlist: {},
+  predictions: [],
+  earnings: [],
+  log: [],
+  weights: {merger:0.80,fda:0.75,regulatory:0.70,lawsuit:0.65,investment:0.60,cancellation:0.45},
+  settings: {interval:21600000,anchorHour:6,autosim:true,evo:true,alert:true,sector:'all',impact:'MEDIUM',sims:3,maxcat:200},
+  evoHistory: []
+};
+
+// ── PROXY FAILOVER (ORION pattern) ─────────────
+const PROXIES = [
+  u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+  u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
+  u=>`https://proxy.cors.sh/${u}`
+];
+
+async function fetchViaProxy(url) {
+  for(const p of PROXIES){
+    try{
+      const r=await fetch(p(url),{signal:AbortSignal.timeout(8000)});
+      if(r.ok){const t=await r.text();if(t.length>100)return t}
+    }catch(e){continue}
+  }
+  return null;
+}
+
+// ── API KEY ─────────────────────────────────────
+function getKey(){return localStorage.getItem('catalyst_key')||''}
+function saveKey(){
+  const k=document.getElementById('api-key-input').value.trim();
+  if(!k.startsWith('sk-ant-')){showToast('Invalid key format — must start with sk-ant-','warn');return}
+  localStorage.setItem('catalyst_key',k);
+  document.getElementById('key-banner').classList.add('hidden');
+  updateStatusReady();
+  log('LEARN','API key activated. CATALYST ready for autonomous operation.');
+  showToast('API key saved. CATALYST active.');
+}
+function clearKey(){
+  localStorage.removeItem('catalyst_key');
+  document.getElementById('key-banner').classList.remove('hidden');
+  document.getElementById('api-key-input').value='';
+  stopAutoRun();
+  log('LEARN','API key cleared.');
+}
+
+// ── STATUS ──────────────────────────────────────
+function updateStatusReady(){
+  document.getElementById('pulse-dot').className='pulse';
+  document.getElementById('status-text').innerHTML='READY — <strong>Autonomous mode available</strong>';
+}
+function updateStatusScanning(){
+  document.getElementById('pulse-dot').className='pulse';
+  document.getElementById('status-text').innerHTML='SCANNING — <strong>Fetching catalyst data...</strong>';
+}
+function updateStatusRunning(){
+  document.getElementById('pulse-dot').className='pulse';
+  document.getElementById('status-text').innerHTML='AUTO-RUN — <strong>Watching 24/7</strong>';
+}
+function updateStatusIdle(){
+  document.getElementById('pulse-dot').className='pulse idle';
+  document.getElementById('status-text').innerHTML='STANDBY — <strong>Set API key to activate</strong>';
+}
+
+// ── LOGGING ─────────────────────────────────────
+function log(tag,msg){
+  const ts=new Date().toLocaleTimeString('en-US',{hour12:false});
+  STATE.log.push({ts,tag,msg});
+  const stream=document.getElementById('log-stream');
+  const line=document.createElement('div');
+  line.className='log-line';
+  line.innerHTML=`<span class="log-ts">${ts}</span><span class="log-tag ${tag}">${tag}</span><span class="log-msg">${msg}</span>`;
+  stream.appendChild(line);
+  stream.scrollTop=stream.scrollHeight;
+  // keep last 500
+  while(stream.children.length>500)stream.removeChild(stream.firstChild);
+}
+
+// ── CLAUDE API CALL ─────────────────────────────
+async function callClaude(systemPrompt, userPrompt, maxTokens=1200){
+  const key=getKey();
+  if(!key)throw new Error('No API key');
+  const r=await fetch('https://api.anthropic.com/v1/messages',{
+    method:'POST',
+    headers:{'Content-Type':'application/json','x-api-key':key,'anthropic-version':'2023-06-01','anthropic-dangerous-direct-browser-access':'true'},
+    body:JSON.stringify({
+      model:'claude-haiku-4-5-20251001',
+      max_tokens:maxTokens,
+      system:systemPrompt,
+      messages:[{role:'user',content:userPrompt}]
+    })
+  });
+  if(!r.ok){const e=await r.json();throw new Error(e.error?.message||'API error')}
+  const d=await r.json();
+  return d.content[0].text;
+}
+
+// ── CATALYST SCAN ENGINE ─────────────────────────
+const SCAN_SOURCES = [
+  'https://feeds.feedburner.com/TechCrunch',
+  'https://www.reutersagency.com/feed/?best-topics=business-finance&post_type=best',
+  'https://feeds.npr.org/1017/rss.xml'
+];
+
+// ── LIVE FDA FEED (openFDA — free, no key, primary source) ──
+function fdaDateRange(daysBack){
+  const end=new Date();
+  const start=new Date(end.getTime()-daysBack*86400000);
+  const fmt=d=>d.getFullYear()+String(d.getMonth()+1).padStart(2,'0')+String(d.getDate()).padStart(2,'0');
+  return fmt(start)+'+TO+'+fmt(end);
+}
+
+async function fetchOpenFDA(){
+  // Returns formatted string of recent FDA drug approvals + recalls, or '' on failure
+  let out='';
+  const range=fdaDateRange(45);
+  // 1. Recent drug approvals (Drugs@FDA)
+  const approvalsUrl=`https://api.fda.gov/drug/drugsfda.json?search=submissions.submission_status_date:[${range}]&sort=submissions.submission_status_date:desc&limit=15`;
+  // 2. Recent recalls/enforcement (failures + safety actions)
+  const recallsUrl=`https://api.fda.gov/drug/enforcement.json?search=report_date:[${range}]&sort=report_date:desc&limit=10`;
+
+  // Try direct first (openFDA sends CORS headers), then proxy fallback
+  async function pull(url){
+    try{
+      const r=await fetch(url,{signal:AbortSignal.timeout(9000)});
+      if(r.ok)return await r.json();
+    }catch(e){}
+    try{
+      const txt=await fetchViaProxy(url);
+      if(txt)return JSON.parse(txt);
+    }catch(e){}
+    return null;
+  }
+
+  const ap=await pull(approvalsUrl);
+  if(ap&&ap.results){
+    const lines=ap.results.slice(0,12).map(r=>{
+      const sponsor=r.sponsor_name||'?';
+      const prods=(r.products||[]).map(p=>p.brand_name).filter(Boolean);
+      const brand=prods.length?prods[0]:(r.openfda&&r.openfda.brand_name?r.openfda.brand_name[0]:'?');
+      const subs=r.submissions||[];
+      const latest=subs.length?subs[subs.length-1]:{};
+      const type=latest.submission_type||'';
+      const status=latest.submission_status||'';
+      const date=latest.submission_status_date||'';
+      return `FDA APPROVAL: ${brand} by ${sponsor} | ${type} ${status} ${date} | App ${r.application_number||''}`;
+    });
+    out+=lines.join('\n')+'\n';
+    log('SCAN',`openFDA: <strong>${lines.length} drug approval records</strong> pulled live`);
+  }
+
+  const rc=await pull(recallsUrl);
+  if(rc&&rc.results){
+    const lines=rc.results.slice(0,8).map(r=>{
+      const firm=r.recalling_firm||'?';
+      const reason=(r.reason_for_recall||'').slice(0,80);
+      const cls=r.classification||'';
+      return `FDA RECALL: ${firm} | ${cls} | ${reason} | ${r.report_date||''}`;
+    });
+    out+=lines.join('\n')+'\n';
+    log('SCAN',`openFDA: <strong>${lines.length} recall/enforcement records</strong> pulled live`);
+  }
+
+  if(!out)log('SCAN','openFDA: no live data returned (will use knowledge base for FDA)');
+  return out;
+}
+
+// ── LIVE CLINICAL TRIALS FEED (ClinicalTrials.gov v2 — free, no key) ──
+async function fetchClinicalTrials(){
+  // Pull Phase 3 trials that recently changed to COMPLETED or TERMINATED —
+  // these are catalysts forming weeks before the FDA decision.
+  let out='';
+  const end=new Date();
+  const start=new Date(end.getTime()-30*86400000);
+  const fmt=d=>d.toISOString().slice(0,10);
+  const dateFilter=`AREA[LastUpdatePostDate]RANGE[${fmt(start)},MAX]`;
+  const fields='NCTId,BriefTitle,OverallStatus,Phase,LeadSponsorName,CompletionDate,Condition,HasResults';
+
+  function ctUrl(status){
+    const p=new URLSearchParams({
+      'query.term':dateFilter,
+      'filter.overallStatus':status,
+      'filter.phase':'PHASE3',
+      'fields':fields,
+      'sort':'LastUpdatePostDate:desc',
+      'pageSize':'12',
+      'format':'json'
+    });
+    return 'https://clinicaltrials.gov/api/v2/studies?'+p.toString();
+  }
+
+  async function pull(url){
+    // CT.gov blocks some browser TLS — try direct, then proxy
+    try{
+      const r=await fetch(url,{signal:AbortSignal.timeout(9000)});
+      if(r.ok)return await r.json();
+    }catch(e){}
+    try{
+      const txt=await fetchViaProxy(url);
+      if(txt)return JSON.parse(txt);
+    }catch(e){}
+    return null;
+  }
+
+  for(const status of ['COMPLETED','TERMINATED']){
+    const data=await pull(ctUrl(status));
+    if(data&&data.studies){
+      const lines=data.studies.slice(0,8).map(s=>{
+        const p=s.protocolSection||{};
+        const id=(p.identificationModule||{});
+        const st=(p.statusModule||{});
+        const sp=(p.sponsorCollaboratorsModule||{}).leadSponsor||{};
+        const cond=((p.conditionsModule||{}).conditions||[]).slice(0,2).join(', ');
+        const title=(id.briefTitle||'').slice(0,90);
+        const sponsor=sp.name||'?';
+        const hasResults=s.hasResults?'RESULTS POSTED':'no results yet';
+        const compDate=(st.completionDateStruct||{}).date||'';
+        return `TRIAL ${status}: ${title} | Sponsor: ${sponsor} | ${cond} | ${hasResults} | ${compDate}`;
+      });
+      if(lines.length){
+        out+=lines.join('\n')+'\n';
+        log('SCAN',`ClinicalTrials.gov: <strong>${lines.length} Phase 3 ${status.toLowerCase()} trials</strong> pulled live`);
+      }
+    }
+  }
+
+  if(!out)log('SCAN','ClinicalTrials.gov: no live data this scan');
+  return out;
+}
+
+const SCAN_PROMPT_SYSTEM = `You are CATALYST, an autonomous market catalyst intelligence system. You analyze news and regulatory filings to identify catalysts that could move stock prices — mergers, acquisitions, FDA approvals, lawsuits, regulatory decisions, permits, major investments, and order cancellations.
+
+You MUST respond with ONLY a valid JSON array. No preamble, no explanation, no markdown fences. Raw JSON array only.
+
+Each catalyst object has these exact fields:
+- id: unique string (slug format)
+- type: one of [Merger, Acquisition, FDA, Approval, Regulatory, Lawsuit, Investment, Permit, Cancellation]
+- title: string (clear, specific)
+- tickers: array of strings (stock symbols affected, 1-5 tickers)
+- direction: "up" | "down" | "neutral"
+- impact: "HIGH" | "MEDIUM" | "LOW"
+- timeframe: string (e.g., "2-4 weeks", "3-6 months")
+- thesis: string (2-3 sentences explaining the market impact logic)
+- passMove: string (e.g., "+15-25%") — what happens if catalyst resolves positively
+- failMove: string (e.g., "-10-15%") — what happens if catalyst resolves negatively
+- watchFor: string (specific signal or event that would confirm/deny)
+- ripples: array of objects with {ticker, effect} — second-order effects on related stocks
+- probability: number 0-100 (estimated probability of positive resolution)
+- source: string (brief source description)
+
+Return EXACTLY 3 catalysts. Keep thesis to 2 short sentences, watchFor to 1 sentence, max 2 ripples each.
+
+CRITICAL JSON RULES — violating these breaks the system:
+- Use ONLY straight double quotes for strings. NEVER use apostrophes, curly quotes, or unescaped quotes inside string values.
+- NO line breaks inside string values. Keep each string on one line.
+- NO special characters like em-dashes, percentage signs are fine but avoid quotes inside text.
+- Write numbers for probability as plain integers (e.g. 70 not "70%").
+- Double-check every string is properly closed before the comma.
+- Keep total output under 3500 tokens so it completes fully.
+
+Focus on HIGH and MEDIUM impact only. Output ONLY the JSON array, nothing else.`;
+
+async function runScan(){
+  const key=getKey();
+  if(!key){showToast('Set API key first','warn');return}
+  if(!key.startsWith('sk-ant-')){showToast('API key format invalid — must start with sk-ant-','error');log('ERROR','Key in storage does not start with sk-ant- — check localStorage');return}
+  log('SCAN',`API key found (${key.slice(0,14)}...) — proceeding`);
+  if(!getKey()){showToast('Set API key first','warn');return}
+  const btn=document.getElementById('scan-btn');
+  btn.textContent='SCANNING...';btn.disabled=true;
+  setLoading(true);
+  updateStatusScanning();
+  log('SCAN',`Scan #${STATE.scanCount+1} initiated — fetching news sources...`);
+
+  // Gather headlines via proxy — failures are silent, Claude runs regardless
+  let headlines='';
+  for(const src of SCAN_SOURCES){
+    try{
+      const txt=await fetchViaProxy(src);
+      if(txt){
+        const titles=[...txt.matchAll(/<title>([^<]{10,200})<\/title>/g)].slice(0,12).map(m=>m[1].replace(/&amp;/g,'&').replace(/&lt;/g,'<').replace(/&gt;/g,'>').replace(/CDATA/g,'').trim());
+        if(titles.length){headlines+=titles.join('\n')+'\n';log('SCAN',`Fetched ${titles.length} headlines`);}
+      }
+    }catch(e){/* proxy failed silently */}
+  }
+  if(!headlines)log('SCAN','Proxies unavailable — Claude running on knowledge base');
+
+  // Pull LIVE FDA data as primary source
+  let fdaData='';
+  try{ fdaData=await fetchOpenFDA(); }catch(e){ log('SCAN','openFDA fetch error: '+e.message); }
+
+  // Pull LIVE clinical trial status changes (leading indicator)
+  let ctData='';
+  try{ ctData=await fetchClinicalTrials(); }catch(e){ log('SCAN','ClinicalTrials fetch error: '+e.message); }
+
+  // Build date context
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+
+  const userPrompt=`Today is ${dateStr}. You are scanning for market-moving catalysts.
+
+=== LIVE FDA DATA (primary source — sourced directly from openFDA today) ===
+${fdaData||'[openFDA returned no data this scan — use knowledge base for FDA items]'}
+
+When the live FDA data above contains a publicly-traded company, prioritize it as a real, freshly-sourced catalyst. Map the drug/sponsor to its stock ticker. Set source to "openFDA (live)" for these. Recalls are bearish signals; approvals are bullish.
+
+=== LIVE CLINICAL TRIAL STATUS CHANGES (ClinicalTrials.gov, sourced today) ===
+${ctData||'[ClinicalTrials.gov returned no data this scan]'}
+
+Phase 3 trials newly marked COMPLETED (especially with results posted) signal an upcoming FDA filing — a catalyst forming weeks ahead. TERMINATED Phase 3 trials are bearish for the sponsor. Map sponsors to tickers when publicly traded. Set source to "ClinicalTrials.gov (live)" for these.
+
+Recent news headlines gathered:
+${headlines||'[No headlines fetched]'}
+
+Settings: Focus sector: ${STATE.settings.sector}. Min impact: ${STATE.settings.impact}.
+
+Also include any other major active situations you know of (M&A, antitrust, regulatory) that could move markets. For non-FDA-sourced items, set source to "knowledge base".
+
+Generate a fresh catalyst intelligence report as a JSON array.`;
+
+  try{
+    log('SCAN','Calling Claude API...');
+    let raw;
+    try{
+      raw=await callClaude(SCAN_PROMPT_SYSTEM, userPrompt, 4000);
+    }catch(apiErr){
+      log('ERROR',`Claude API error: ${apiErr.message}`);
+      throw apiErr;
+    }
+    log('SCAN',`Claude responded — parsing catalysts...`);
+    let catalysts=[];
+    let cleaned=raw.replace(/```json\n?|```\n?/g,'').trim();
+    // Sanitize common JSON breakers: smart quotes, control chars
+    cleaned=cleaned.replace(/[\u2018\u2019]/g,"'").replace(/[\u201C\u201D]/g,'\\"').replace(/[\u2013\u2014]/g,'-').replace(/[\u0000-\u001F]/g,' ');
+    try{
+      catalysts=JSON.parse(cleaned);
+    }catch(e){
+      try{
+        const match=cleaned.match(/\[[\s\S]*\]/);
+        if(match){catalysts=JSON.parse(match[0]);}
+        else throw e;
+      }catch(e2){
+        // Truncation repair: find last complete object, close the array
+        try{
+          let s=cleaned.indexOf('[');
+          let work=cleaned.slice(s);
+          let lastBrace=work.lastIndexOf('}');
+          if(lastBrace>0){
+            let repaired=work.slice(0,lastBrace+1)+']';
+            catalysts=JSON.parse(repaired);
+            log('SCAN','Recovered '+catalysts.length+' catalysts from truncated response');
+          }else throw e2;
+        }catch(e3){
+          log('ERROR','Parse failed. Response start: '+raw.slice(0,150));
+          throw new Error('JSON parse failed after repair attempt');
+        }
+      }
+    }
+    if(!Array.isArray(catalysts)||!catalysts.length)throw new Error('Empty result');
+
+    // Add timestamps and IDs
+    catalysts=catalysts.map((c,i)=>({
+      ...c,
+      id: c.id||`cat_${Date.now()}_${i}`,
+      scannedAt: new Date().toISOString(),
+      status: 'active',
+      simStatus: 'queued',
+      resolution: null
+    }));
+
+    // Merge (avoid dupes by title similarity)
+    let added=0;
+    for(const c of catalysts){
+      const exists=STATE.catalysts.find(x=>x.title.slice(0,30)===c.title.slice(0,30));
+      if(!exists){
+        STATE.catalysts.unshift(c);
+        added++;
+        // auto-add to watchlist
+        for(const t of(c.tickers||[])){
+          if(!STATE.watchlist[t])STATE.watchlist[t]={ticker:t,catalysts:[],heat:'low'};
+          if(!STATE.watchlist[t].catalysts.includes(c.id))STATE.watchlist[t].catalysts.push(c.id);
+          if(c.impact==='HIGH')STATE.watchlist[t].heat='high';
+          else if(c.impact==='MEDIUM'&&STATE.watchlist[t].heat!=='high')STATE.watchlist[t].heat='med';
+        }
+        // alert on HIGH
+        if(c.impact==='HIGH'&&STATE.settings.alert){
+          showToast(`⚡ HIGH IMPACT: ${c.title.slice(0,50)}...`,'warn');
+        }
+      }
+    }
+
+    // Prune to max
+    if(STATE.catalysts.length>STATE.settings.maxcat){
+      STATE.catalysts=STATE.catalysts.slice(0,STATE.settings.maxcat);
+    }
+
+    STATE.scanCount++;
+    log('SCAN',`Scan complete — <strong>${added} new catalysts</strong> added (${catalysts.length} total found)`);
+    log('LEARN',`Watchlist updated — <strong>${Object.keys(STATE.watchlist).length} tickers</strong> being monitored`);
+
+    // Auto-simulate if enabled
+    if(STATE.settings.autosim){
+      setTimeout(()=>runAllSims(),1500);
+    }
+
+    renderAll();
+    saveState();
+    showToast(`Scan complete — ${added} new catalysts`);
+
+  }catch(e){
+    log('ERROR',`Scan failed: ${e.message}`);
+    showToast('Scan failed — check API key and console','error');
+  }
+
+  btn.textContent='⟳ SCAN NOW';btn.disabled=false;
+  setLoading(false);
+  if(STATE.running)updateStatusRunning();else updateStatusReady();
+}
+
+// ── SIMULATION ENGINE ────────────────────────────
+const SIM_PROMPT_SYSTEM = `You are CATALYST's simulation engine. You run scenario analysis on market catalysts. 
+
+Respond with ONLY a valid JSON object (no fences, no preamble):
+{
+  "passScenario": string (2 sentences: what happens to stock price if catalyst resolves positively),
+  "failScenario": string (2 sentences: what happens if negative),
+  "expectedValue": number (-100 to +100, probability-weighted return estimate in %),
+  "confidence": number (0-100, your confidence in the direction call),
+  "keyRisk": string (single biggest risk to the thesis),
+  "optionsPlay": string (brief options structure suggestion),
+  "hedgePlay": string (how to hedge the other direction)
+}`;
+
+async function simulateCatalyst(cat){
+  const prompt=`Catalyst: ${cat.title}
+Type: ${cat.type}
+Tickers: ${cat.tickers.join(', ')}
+Direction bias: ${cat.direction}
+Impact: ${cat.impact}
+Thesis: ${cat.thesis}
+Pass move estimate: ${cat.passMove}
+Fail move estimate: ${cat.failMove}
+Estimated probability: ${cat.probability}%
+Timeframe: ${cat.timeframe}
+
+Run scenario simulation and return JSON.`;
+
+  try{
+    const raw=await callClaude(SIM_PROMPT_SYSTEM,prompt,600);
+    const cleaned=raw.replace(/```json\n?|```\n?/g,'').trim();
+    const sim=JSON.parse(cleaned);
+    return{...sim,catalystId:cat.id,runAt:new Date().toISOString(),status:'complete'};
+  }catch(e){
+    return{catalystId:cat.id,runAt:new Date().toISOString(),status:'error',error:e.message};
+  }
+}
+
+async function runAllSims(){
+  const pending=STATE.catalysts.filter(c=>c.simStatus==='queued');
+  if(!pending.length){showToast('No pending simulations');return}
+  log('SIM',`Running simulations on <strong>${pending.length} catalysts</strong>...`);
+
+  for(const cat of pending){
+    cat.simStatus='running';
+    renderSims();
+    log('SIM',`Simulating: <strong>${cat.title.slice(0,50)}...</strong>`);
+    const sim=await simulateCatalyst(cat);
+    STATE.simulations.push(sim);
+    cat.simStatus='complete';
+    cat.sim=sim;
+    STATE.simCount++;
+    log('SIM',`Simulation complete — EV: <strong>${sim.expectedValue?.toFixed(1)||'?'}%</strong> | Confidence: ${sim.confidence||'?'}%`);
+    renderSims();
+    saveState();
+    await sleep(800);
+  }
+  renderAll();
+  log('LEARN',`All simulations complete. <strong>${STATE.simCount} total</strong> scenarios run.`);
+}
+
+// ── EVOLUTION ENGINE ─────────────────────────────
+function evolve(){
+  if(!STATE.settings.evo)return;
+  // Adjust weights based on recent prediction accuracy
+  const resolved=STATE.predictions.filter(p=>p.resolved);
+  if(resolved.length<3)return;
+  const byType={};
+  for(const p of resolved){
+    if(!byType[p.type])byType[p.type]={wins:0,total:0};
+    byType[p.type].total++;
+    if(p.correct)byType[p.type].wins++;
+  }
+  const changes=[];
+  for(const[type,stats]of Object.entries(byType)){
+    const wr=stats.wins/stats.total;
+    const key=type.toLowerCase();
+    if(STATE.weights[key]!==undefined){
+      const old=STATE.weights[key];
+      STATE.weights[key]=Math.max(0.1,Math.min(1.0,old*0.8+wr*0.2));
+      if(Math.abs(STATE.weights[key]-old)>0.01)changes.push(`${type}: ${old.toFixed(2)}→${STATE.weights[key].toFixed(2)}`);
+    }
+  }
+  if(changes.length){
+    STATE.evoCycle++;
+    const entry={cycle:STATE.evoCycle,ts:new Date().toISOString(),changes};
+    STATE.evoHistory.push(entry);
+    log('EVOLVE',`Evolution cycle ${STATE.evoCycle} — weights updated: <strong>${changes.join(', ')}</strong>`);
+    renderEvolution();
+  }
+}
+
+// ── AUTO-RUN ─────────────────────────────────────
+function toggleAutoRun(){
+  if(STATE.running)stopAutoRun();else startAutoRun();
+}
+function startAutoRun(){
+  if(!getKey()){showToast('Set API key first','warn');return}
+  STATE.running=true;
+  document.getElementById('auto-btn').textContent='⏹ STOP';
+  document.getElementById('auto-btn').classList.add('running');
+  updateStatusRunning();
+  log('SCAN','Auto-run started — CATALYST is now autonomous.');
+  scheduleNextScan();
+}
+function stopAutoRun(){
+  STATE.running=false;
+  clearTimeout(STATE.scanTimer);
+  clearInterval(STATE.countdownTimer);
+  STATE.nextScan=null;
+  document.getElementById('auto-btn').textContent='▶ AUTO-RUN';
+  document.getElementById('auto-btn').classList.remove('running');
+  document.getElementById('m-next').textContent='—';
+  if(getKey())updateStatusReady();else updateStatusIdle();
+  log('SCAN','Auto-run stopped.');
+}
+function computeNextScanTime(){
+  // Clock-aligned: fire at anchorHour and every (interval) after, anchored to anchorHour
+  const interval=STATE.settings.interval;
+  const anchor=STATE.settings.anchorHour||6;
+  const now=new Date();
+  // Build today's anchor time
+  let next=new Date(now);
+  next.setHours(anchor,0,0,0);
+  // Step forward by interval until next > now
+  if(next.getTime()<=now.getTime()){
+    const stepMs=interval;
+    while(next.getTime()<=now.getTime()){
+      next=new Date(next.getTime()+stepMs);
+    }
+  }
+  return next.getTime();
+}
+function scheduleNextScan(){
+  if(!STATE.running)return;
+  STATE.nextScan=computeNextScanTime();
+  const delay=STATE.nextScan-Date.now();
+  const fireAt=new Date(STATE.nextScan).toLocaleTimeString('en-US',{hour:'2-digit',minute:'2-digit'});
+  log('SCAN',`Next auto-scan scheduled for <strong>${fireAt}</strong>`);
+  STATE.scanTimer=setTimeout(()=>{
+    runScan().then(()=>scheduleNextScan());
+  },delay);
+  updateCountdown();
+  clearInterval(STATE.countdownTimer);
+  STATE.countdownTimer=setInterval(updateCountdown,1000);
+}
+function updateCountdown(){
+  if(!STATE.nextScan){clearInterval(STATE.countdownTimer);return}
+  const rem=Math.max(0,Math.floor((STATE.nextScan-Date.now())/1000));
+  const h=Math.floor(rem/3600),m=Math.floor((rem%3600)/60),s=rem%60;
+  const disp=h>0?`${h}h ${m}m`:`${m}:${s.toString().padStart(2,'0')}`;
+  document.getElementById('m-next').textContent=disp;
+  if(rem<=0)clearInterval(STATE.countdownTimer);
+}
+function triggerManualScan(){runScan()}
+
+// ── RENDER FUNCTIONS ─────────────────────────────
+function renderAll(){
+  renderCatalysts();
+  renderEarnings();
+  renderSims();
+  renderWatchlist();
+  renderMetrics();
+  renderEvolution();
+}
+
+function renderMetrics(){
+  document.getElementById('m-total').textContent=STATE.catalysts.length;
+  document.getElementById('m-sims').textContent=STATE.simCount;
+  document.getElementById('m-high').textContent=STATE.catalysts.filter(c=>c.impact==='HIGH').length;
+  document.getElementById('m-bull').textContent=STATE.catalysts.filter(c=>c.direction==='up').length;
+  document.getElementById('m-bear').textContent=STATE.catalysts.filter(c=>c.direction==='down').length;
+  document.getElementById('m-evo').textContent=STATE.evoCycle;
+  document.getElementById('tab-cat-count').textContent=STATE.catalysts.length;
+  document.getElementById('tab-sim-count').textContent=STATE.simulations.length;
+  document.getElementById('tab-watch-count').textContent=Object.keys(STATE.watchlist).length;
+  // accuracy
+  const resolved=STATE.predictions.filter(p=>p.resolved);
+  if(resolved.length>0){
+    const wr=Math.round(resolved.filter(p=>p.correct).length/resolved.length*100);
+    document.getElementById('m-acc').textContent=wr+'%';
+  }
+}
+
+function renderCatalysts(){
+  const grid=document.getElementById('cat-grid');
+  if(!STATE.catalysts.length){
+    grid.innerHTML='<div class="empty"><div class="empty-icon">◎</div>No catalysts loaded yet.<br>Set your API key and click SCAN NOW.</div>';
+    return;
+  }
+  grid.innerHTML=STATE.catalysts.map(c=>catalystCard(c)).join('');
+  document.getElementById('cat-last-scan').textContent=`Last scan: ${new Date().toLocaleTimeString()}`;
+}
+
+function catalystCard(c){
+  const typeClass=`type-${c.type.toLowerCase()}`;
+  const dirClass=c.direction==='up'?'dir-up':c.direction==='down'?'dir-dn':'dir-neutral';
+  const dirLabel=c.direction==='up'?'↑ BULL':c.direction==='down'?'↓ BEAR':'→ NEUTRAL';
+  const ripples=(c.ripples||[]).map(r=>`<div class="rchip"><strong>${r.ticker||r.s||''}</strong> ${r.effect||r.e||''}</div>`).join('');
+  const simBlock=c.sim&&c.sim.status==='complete'?`
+    <div class="sim-result">
+      <div class="sim-label">▶ Simulation Result</div>
+      <div class="sim-scenarios">
+        <div class="sim-s sim-pass"><div class="sim-s-label">PASS SCENARIO</div><div class="sim-s-val">${c.sim.passScenario||c.passMove}</div></div>
+        <div class="sim-s sim-fail"><div class="sim-s-label">FAIL SCENARIO</div><div class="sim-s-val">${c.sim.failScenario||c.failMove}</div></div>
+      </div>
+      <div style="margin-top:8px;font-size:10px;color:var(--text3)">
+        EV: <strong style="color:${(c.sim.expectedValue||0)>0?'var(--up)':'var(--dn)'}">${c.sim.expectedValue?.toFixed(1)||'?'}%</strong> &nbsp;|&nbsp;
+        Confidence: <strong>${c.sim.confidence||'?'}%</strong> &nbsp;|&nbsp;
+        Options: <span style="color:var(--text2)">${c.sim.optionsPlay||'—'}</span>
+      </div>
+      <div style="margin-top:4px;font-size:10px;color:var(--text3)">Key risk: <span style="color:var(--warn)">${c.sim.keyRisk||'—'}</span></div>
+    </div>
+  `:'';
+  return`<div class="cat-card ${c.impact}" id="card-${c.id}">
+  <div class="scanning-overlay"><span class="scan-anim">SCANNING</span></div>
+  <div class="cat-top" onclick="toggleCard('${c.id}')">
+    <div class="cat-type ${typeClass}">${c.type}</div>
+    <div class="cat-main">
+      <div class="cat-title">${c.title}</div>
+      <div class="cat-tickers">${(c.tickers||[]).map(t=>`<span class="ticker">${t}</span>`).join('')}</div>
+      <div class="cat-meta">${c.timeframe||''} · Found: ${c.scannedAt?new Date(c.scannedAt).toLocaleString():''} · Prob: ${c.probability||'?'}%</div>
+    </div>
+    <div class="cat-right">
+      <span class="${dirClass} dir-tag">${dirLabel}</span>
+      <span class="impact-tag impact-${c.impact}">${c.impact}</span>
+      <span class="tf-tag">${c.passMove||''} / ${c.failMove||''}</span>
+    </div>
+  </div>
+  <div class="cat-expand">
+    <div class="exp-grid">
+      <div class="exp-block"><div class="exp-label">Thesis</div><div class="exp-val">${c.thesis||'—'}</div></div>
+      <div class="exp-block"><div class="exp-label">Watch For</div><div class="exp-val">${c.watchFor||'—'}</div></div>
+    </div>
+    ${simBlock}
+    <div class="ripple-row"><div class="ripple-label">Ripple Chain</div><div class="ripple-chips">${ripples||'<span style="color:var(--text3);font-size:10px">No ripples mapped</span>'}</div></div>
+    <div class="cat-actions">
+      <button class="cat-btn" onclick="deepDive('${c.id}')">⬡ DEEP DIVE ↗</button>
+      <button class="cat-btn" onclick="simSingle('${c.id}')">▶ SIMULATE</button>
+      <button class="cat-btn" onclick="markResolved('${c.id}','correct')">✓ WIN</button>
+      <button class="cat-btn" onclick="markResolved('${c.id}','incorrect')">✗ LOSS</button>
+    </div>
+  </div>
+</div>`;
+}
+
+function toggleCard(id){
+  const card=document.getElementById(`card-${id}`);
+  const isOpen=card.classList.contains('expanded');
+  document.querySelectorAll('.cat-card').forEach(c=>c.classList.remove('expanded'));
+  if(!isOpen)card.classList.add('expanded');
+}
+
+function renderSims(){
+  const tbody=document.getElementById('sim-tbody');
+  if(!STATE.catalysts.length){tbody.innerHTML='<tr><td colspan="8" style="text-align:center;color:var(--text3);padding:24px">No simulations yet.</td></tr>';return}
+  tbody.innerHTML=STATE.catalysts.map(c=>{
+    const s=c.sim;
+    const statusBadge=c.simStatus==='running'?'<span class="sim-badge sim-running">RUNNING</span>':c.simStatus==='complete'?'<span class="sim-badge sim-complete">DONE</span>':'<span class="sim-badge sim-queued">QUEUED</span>';
+    const ev=s?.expectedValue!=null?`<span style="color:${s.expectedValue>0?'var(--up)':'var(--dn)'}">${s.expectedValue.toFixed(1)}%</span>`:'—';
+    const prob=c.probability||0;
+    return`<tr>
+      <td style="max-width:280px;color:var(--text)">${c.title.slice(0,60)}${c.title.length>60?'...':''}</td>
+      <td><span class="cat-type type-${c.type.toLowerCase()}" style="font-size:9px">${c.type}</span></td>
+      <td style="color:var(--accent);font-size:10px">${(c.tickers||[]).slice(0,3).join(' ')}</td>
+      <td style="color:var(--up)">${c.passMove||'—'}</td>
+      <td style="color:var(--dn)">${c.failMove||'—'}</td>
+      <td>${prob}%<div class="prob-bar"><div class="prob-fill" style="width:${prob}%"></div></div></td>
+      <td>${ev}</td>
+      <td>${statusBadge}</td>
+    </tr>`;
+  }).join('');
+}
+
+function renderWatchlist(){
+  const grid=document.getElementById('watch-grid');
+  const tickers=Object.values(STATE.watchlist);
+  if(!tickers.length){grid.innerHTML='<div class="empty" style="grid-column:1/-1"><div class="empty-icon">◎</div>No tickers monitored yet.</div>';return}
+  grid.innerHTML=tickers.map(w=>{
+    const cats=STATE.catalysts.filter(c=>(c.tickers||[]).includes(w.ticker));
+    return`<div class="watch-card">
+      <div class="watch-ticker">${w.ticker}</div>
+      <div class="watch-sector">${cats.length} active catalyst${cats.length!==1?'s':''}</div>
+      <div class="watch-catalysts">${cats.slice(0,3).map(c=>`${c.type}: ${c.title.slice(0,35)}...`).join('<br>')}</div>
+      <div class="watch-heat heat-${w.heat}"></div>
+    </div>`;
+  }).join('');
+}
+
+function renderEvolution(){
+  // weights
+  for(const[k,v]of Object.entries(STATE.weights)){
+    const el=document.getElementById(`ew-${k}`);
+    if(el)el.textContent=v.toFixed(2);
+  }
+  // track record
+  const resolved=STATE.predictions.filter(p=>p.resolved);
+  const wins=resolved.filter(p=>p.correct).length;
+  document.getElementById('et-total').textContent=STATE.predictions.length;
+  document.getElementById('et-resolved').textContent=resolved.length;
+  document.getElementById('et-wins').textContent=wins;
+  document.getElementById('et-losses').textContent=resolved.length-wins;
+  document.getElementById('et-wr').textContent=resolved.length?Math.round(wins/resolved.length*100)+'%':'—';
+  // evo history
+  const hist=document.getElementById('evo-history');
+  if(STATE.evoHistory.length){
+    hist.innerHTML=STATE.evoHistory.slice(-10).reverse().map(e=>
+      `<div style="margin-bottom:6px"><span style="color:var(--text3)">Cycle ${e.cycle} · ${new Date(e.ts).toLocaleString()}</span><br>${e.changes.map(c=>`<span style="color:var(--accent)">${c}</span>`).join(' | ')}</div>`
+    ).join('');
+  }
+}
+
+// ── ACTIONS ──────────────────────────────────────
+function deepDive(id){
+  const c=STATE.catalysts.find(x=>x.id===id);
+  if(!c)return;
+  // Send to chat via sendPrompt pattern — in standalone, open new chat
+  const prompt=`CATALYST deep dive on catalyst: "${c.title}" — tickers: ${(c.tickers||[]).join(', ')}. Type: ${c.type}. Direction: ${c.direction}. Impact: ${c.impact}. Thesis: ${c.thesis}. Run full 5-Q protocol: historical analog, options flow signal, macro linkage, second-order ripple effects, and recommended trade structure with strikes/expiry.`;
+  if(window.sendPrompt)window.sendPrompt(prompt);
+  else{navigator.clipboard.writeText(prompt).then(()=>showToast('Deep dive prompt copied to clipboard'));} 
+}
+
+async function simSingle(id){
+  const c=STATE.catalysts.find(x=>x.id===id);
+  if(!c||!getKey())return;
+  c.simStatus='running';
+  renderCatalysts();
+  log('SIM',`Running simulation for: <strong>${c.title.slice(0,50)}...</strong>`);
+  const sim=await simulateCatalyst(c);
+  c.sim=sim;c.simStatus='complete';
+  STATE.simulations.push(sim);STATE.simCount++;
+  log('SIM',`Done — EV: <strong>${sim.expectedValue?.toFixed(1)||'?'}%</strong>`);
+  renderAll();saveState();
+}
+
+function markResolved(id,result){
+  const c=STATE.catalysts.find(x=>x.id===id);
+  if(!c)return;
+  c.status=result==='correct'?'win':'loss';
+  c.resolvedAt=new Date().toISOString();
+  STATE.predictions.push({id,type:c.type.toLowerCase(),resolved:true,correct:result==='correct',resolvedAt:c.resolvedAt});
+  log('LEARN',`Catalyst resolved as <strong>${result.toUpperCase()}</strong>: ${c.title.slice(0,50)}...`);
+  evolve();
+  renderAll();saveState();
+  showToast(`Marked as ${result}`);
+}
+
+function addWatchTicker(){
+  const t=prompt('Enter ticker symbol (e.g. AAPL):');
+  if(!t)return;
+  const ticker=t.toUpperCase().trim();
+  if(!STATE.watchlist[ticker])STATE.watchlist[ticker]={ticker,catalysts:[],heat:'low'};
+  renderWatchlist();saveState();
+  showToast(`${ticker} added to watchlist`);
+}
+
+// ── PERSISTENCE ──────────────────────────────────
+function saveState(){
+  try{localStorage.setItem('catalyst_state',JSON.stringify({
+    catalysts:STATE.catalysts.slice(0,200),
+    simulations:STATE.simulations.slice(0,200),
+    watchlist:STATE.watchlist,
+    predictions:STATE.predictions.slice(0,500),
+    earnings:STATE.earnings.slice(0,100),
+    weights:STATE.weights,
+    settings:STATE.settings,
+    evoHistory:STATE.evoHistory,
+    evoCycle:STATE.evoCycle,
+    simCount:STATE.simCount,
+    scanCount:STATE.scanCount
+  }));}catch(e){log('ERROR','State save failed: '+e.message)}
+}
+
+function loadState(){
+  try{
+    const raw=localStorage.getItem('catalyst_state');
+    if(!raw)return;
+    const s=JSON.parse(raw);
+    Object.assign(STATE,s);
+    log('LEARN',`State restored — <strong>${STATE.catalysts.length} catalysts</strong>, <strong>${STATE.simCount} simulations</strong> from last session`);
+    renderAll();
+  }catch(e){log('ERROR','State load failed: '+e.message)}
+}
+
+function clearAll(){
+  if(!confirm('Reset all CATALYST data? This cannot be undone.'))return;
+  STATE.catalysts=[];STATE.simulations=[];STATE.watchlist={};
+  STATE.predictions=[];STATE.earnings=[];STATE.evoHistory=[];STATE.simCount=0;STATE.scanCount=0;STATE.evoCycle=1;
+  localStorage.removeItem('catalyst_state');
+  renderAll();log('LEARN','All data cleared. CATALYST reset.');showToast('Reset complete');
+}
+
+function clearLog(){
+  document.getElementById('log-stream').innerHTML='';
+  STATE.log=[];
+}
+
+function exportLog(){
+  const txt=STATE.log.map(l=>`[${l.ts}] [${l.tag}] ${l.msg.replace(/<[^>]+>/g,'')}`).join('\n');
+  download('catalyst_log.txt',txt,'text/plain');
+}
+
+function exportSims(){
+  download('catalyst_sims.json',JSON.stringify(STATE.simulations,null,2),'application/json');
+}
+
+function exportAll(){
+  download('catalyst_full.json',JSON.stringify({catalysts:STATE.catalysts,simulations:STATE.simulations,watchlist:STATE.watchlist,predictions:STATE.predictions,weights:STATE.weights,evoHistory:STATE.evoHistory},null,2),'application/json');
+  showToast('Full export downloaded');
+}
+
+function download(name,data,type){
+  const a=document.createElement('a');
+  a.href=URL.createObjectURL(new Blob([data],{type}));
+  a.download=name;a.click();
+}
+
+// ── SETTINGS ─────────────────────────────────────
+function saveSetting(key,val){
+  STATE.settings[key]=key==='interval'?parseInt(val):key==='sims'?parseInt(val):val;
+  saveState();
+  // restart timer with new interval if running
+  if(key==='interval'&&STATE.running){
+    clearTimeout(STATE.scanTimer);clearInterval(STATE.countdownTimer);scheduleNextScan();
+  }
+}
+
+// ── TABS ──────────────────────────────────────────
+function showTab(id,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('panel-'+id).classList.add('active');
+  el.classList.add('active');
+}
+
+// ── UI HELPERS ────────────────────────────────────
+function setLoading(on){
+  const b=document.getElementById('loading-bar');
+  b.className=on?'loading-bar active':'loading-bar';
+}
+
+let toastTimer;
+function showToast(msg,type=''){
+  const t=document.getElementById('toast');
+  t.textContent=msg;t.className='toast'+(type?' '+type:'')+' show';
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove('show'),3500);
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms))}
+
+// ── INIT ──────────────────────────────────────────
+
+// ═══════════════════════════════════════════════
+// EARNINGS TRADE ENGINE
+// ═══════════════════════════════════════════════
+
+const EARN_PROMPT_SYSTEM = `You are CATALYST's earnings trade engine. You identify high-volume, volatile stocks reporting earnings in the next 21 days and produce actionable trade setups.
+
+You MUST respond with ONLY a valid JSON array. No preamble, no markdown fences. Raw JSON only.
+
+Each earnings trade object has these exact fields:
+- ticker: string (stock symbol)
+- company: string (company name)
+- earningsDate: string (expected report date, format "Mon DD" e.g. "Jun 12")
+- daysOut: number (days until earnings from today: must be 1-21)
+- bucket: number (7, 14, or 21 — which window it falls in)
+- volatility: "HIGH" | "MED" (expected move size around earnings)
+- direction: "LONG" | "SHORT" | "NEUTRAL" (your directional call)
+- currentPrice: number (approximate current price in dollars)
+- targetPrice: number (price target if thesis plays out)
+- entryPrice: number (suggested entry price)
+- stopPrice: number (stop-loss price)
+- confidence: number (0-100, your confidence in the direction)
+- expectedMove: string (e.g. "+/-8%" — implied move around earnings)
+- thesis: string (2 sentences: WHY this setup, what the catalyst within earnings is)
+
+CRITICAL JSON RULES:
+- Straight double quotes only. No apostrophes or curly quotes inside strings.
+- No line breaks inside string values.
+- All prices are plain numbers, no dollar signs (e.g. 145.50 not "$145.50").
+- Keep thesis under 250 characters.
+
+Select 6-9 stocks total across the three buckets (7/14/21 day). Prioritize names with HIGH expected volatility and heavy options volume — these are where earnings moves are tradeable. Mix sectors. For NEUTRAL calls, target/entry/stop frame a straddle range. Output ONLY the JSON array.`;
+
+async function runEarningsScan(){
+  const key=getKey();
+  if(!key){showToast('Set API key first','warn');return}
+  const btn=document.getElementById('earn-scan-btn');
+  btn.textContent='SCANNING...';btn.disabled=true;
+  setLoading(true);
+  log('SCAN','Earnings scan initiated — finding high-vol stocks reporting in 21 days...');
+
+  // Try to pull live prices/headlines via proxy (best-effort)
+  let headlines='';
+  for(const src of SCAN_SOURCES){
+    try{
+      const txt=await fetchViaProxy(src);
+      if(txt){
+        const titles=[...txt.matchAll(/<title>([^<]{10,200})<\/title>/g)].slice(0,10).map(m=>m[1].replace(/&amp;/g,'&').replace(/CDATA/g,'').trim());
+        if(titles.length)headlines+=titles.join('\n')+'\n';
+      }
+    }catch(e){}
+  }
+
+  const now=new Date();
+  const dateStr=now.toLocaleDateString('en-US',{weekday:'long',year:'numeric',month:'long',day:'numeric'});
+  const userPrompt=`Today is ${dateStr}. Identify high-volume, volatile stocks reporting EARNINGS in the next 21 days.
+
+${headlines?'Recent market headlines for context:\n'+headlines:''}
+
+Use your knowledge of the earnings calendar and which large/mid-cap names report in this window. Focus on stocks known for big earnings moves (high implied volatility, heavy options flow). Produce trade setups with current price, target, entry, stop. Distribute across 7-day, 14-day, and 21-day buckets. Output the JSON array.`;
+
+  try{
+    log('SCAN','Calling Claude for earnings analysis...');
+    const raw=await callClaude(EARN_PROMPT_SYSTEM, userPrompt, 4000);
+    let trades=[];
+    let cleaned=raw.replace(/```json\n?|```\n?/g,'').trim();
+    cleaned=cleaned.replace(/[\u2018\u2019]/g,"'").replace(/[\u201C\u201D]/g,'\\"').replace(/[\u2013\u2014]/g,'-').replace(/[\u0000-\u001F]/g,' ');
+    try{
+      trades=JSON.parse(cleaned);
+    }catch(e){
+      const m=cleaned.match(/\[[\s\S]*\]/);
+      if(m){
+        try{trades=JSON.parse(m[0]);}
+        catch(e2){
+          let s=cleaned.indexOf('[');let work=cleaned.slice(s);let lb=work.lastIndexOf('}');
+          if(lb>0){trades=JSON.parse(work.slice(0,lb+1)+']');log('SCAN','Recovered '+trades.length+' trades from truncated response');}
+          else throw e2;
+        }
+      }else throw e;
+    }
+    if(!Array.isArray(trades)||!trades.length)throw new Error('Empty result');
+
+    trades=trades.map((t,i)=>({...t,id:`earn_${Date.now()}_${i}`,scannedAt:new Date().toISOString(),status:'open',resolution:null}));
+    // Replace current open earnings set (fresh scan)
+    STATE.earnings=trades.concat(STATE.earnings.filter(e=>e.status!=='open')).slice(0,100);
+
+    log('SCAN',`Earnings scan complete — <strong>${trades.length} trade setups</strong> generated`);
+    const high=trades.filter(t=>t.volatility==='HIGH').length;
+    log('LEARN',`<strong>${high} HIGH-volatility</strong> setups flagged across 7/14/21-day buckets`);
+    renderEarnings();renderMetrics();saveState();
+    showToast(`${trades.length} earnings setups ready`);
+  }catch(e){
+    log('ERROR','Earnings scan failed: '+e.message);
+    showToast('Earnings scan failed','error');
+  }
+  btn.textContent='⟳ SCAN EARNINGS';btn.disabled=false;
+  setLoading(false);
+}
+
+function renderEarnings(){
+  const wrap=document.getElementById('earn-buckets');
+  const open=STATE.earnings.filter(e=>e.status==='open');
+  if(!open.length){
+    wrap.innerHTML='<div class="empty"><div class="empty-icon">◷</div>No earnings analysis yet.<br>Click SCAN EARNINGS to begin.</div>';
+    document.getElementById('tab-earn-count').textContent='0';
+    return;
+  }
+  document.getElementById('tab-earn-count').textContent=open.length;
+  document.getElementById('earn-last-scan').textContent='Last scan: '+new Date().toLocaleTimeString();
+  const buckets=[{d:7,label:'Next 7 Days'},{d:14,label:'8-14 Days'},{d:21,label:'15-21 Days'}];
+  let html='';
+  for(const b of buckets){
+    const items=open.filter(e=>{
+      const days=e.daysOut||e.bucket||99;
+      if(b.d===7)return days<=7;
+      if(b.d===14)return days>7&&days<=14;
+      return days>14&&days<=21;
+    });
+    html+=`<div class="earn-bucket">
+      <div class="earn-bucket-hdr"><span class="earn-bucket-title">${b.label}</span><span class="earn-bucket-count">${items.length} setup${items.length!==1?'s':''}</span></div>
+      ${items.length?items.map(earnCard).join(''):'<div style="font-size:11px;color:var(--text3);padding:8px 0">No setups in this window.</div>'}
+    </div>`;
+  }
+  wrap.innerHTML=html;
+}
+
+function earnCard(e){
+  const dir=e.direction||'NEUTRAL';
+  const resolved=e.resolution?`<span class="earn-resolved ${e.resolution}">${e.resolution}</span>`:'';
+  return`<div class="earn-card ${dir}" id="ecard-${e.id}">
+    <div class="earn-top" onclick="toggleEarn('${e.id}')">
+      <div class="earn-ticker-box">
+        <span class="earn-ticker">${e.ticker}</span>
+        <span class="earn-date">${e.earningsDate||''}</span>
+      </div>
+      <div class="earn-main">
+        <div class="earn-name">${e.company||''}</div>
+        <div class="earn-prices">
+          <div class="earn-price-item"><span class="earn-price-label">Current</span><span class="earn-price-val current">$${fmtP(e.currentPrice)}</span></div>
+          <div class="earn-price-item"><span class="earn-price-label">Entry</span><span class="earn-price-val entry">$${fmtP(e.entryPrice)}</span></div>
+          <div class="earn-price-item"><span class="earn-price-label">Target</span><span class="earn-price-val target">$${fmtP(e.targetPrice)}</span></div>
+          <div class="earn-price-item"><span class="earn-price-label">Stop</span><span class="earn-price-val stop">$${fmtP(e.stopPrice)}</span></div>
+        </div>
+      </div>
+      <div class="earn-right">
+        <span class="earn-dir ${dir}">${dir==='LONG'?'↑ LONG':dir==='SHORT'?'↓ SHORT':'↔ NEUTRAL'}</span>
+        <span class="earn-vol ${e.volatility||'MED'}">${e.volatility||'MED'} VOL</span>
+        <span class="earn-conf">${e.confidence||'?'}% conf · ${e.expectedMove||''}</span>
+        ${resolved}
+      </div>
+    </div>
+    <div class="earn-expand">
+      <div class="earn-thesis">${e.thesis||'No thesis provided.'}</div>
+      <div class="earn-rr">
+        <span class="earn-rr-item">Days out: <strong>${e.daysOut||'?'}</strong></span>
+        <span class="earn-rr-item">Expected move: <strong>${e.expectedMove||'?'}</strong></span>
+        <span class="earn-rr-item">R/R: <strong>${calcRR(e)}</strong></span>
+      </div>
+      <div class="earn-actions">
+        <button class="earn-btn" onclick="event.stopPropagation();earnDeepDive('${e.id}')">⬡ DEEP DIVE ↗</button>
+        <button class="earn-btn win" onclick="event.stopPropagation();earnResolve('${e.id}','win')">✓ WIN</button>
+        <button class="earn-btn loss" onclick="event.stopPropagation();earnResolve('${e.id}','loss')">✗ LOSS</button>
+      </div>
+    </div>
+  </div>`;
+}
+
+function fmtP(n){return (typeof n==='number'&&!isNaN(n))?n.toFixed(2):(n||'?')}
+function calcRR(e){
+  const c=e.entryPrice,t=e.targetPrice,s=e.stopPrice;
+  if(typeof c!=='number'||typeof t!=='number'||typeof s!=='number')return '?';
+  const reward=Math.abs(t-c),risk=Math.abs(c-s);
+  if(risk===0)return '?';
+  return '1:'+(reward/risk).toFixed(1);
+}
+function toggleEarn(id){
+  const card=document.getElementById('ecard-'+id);
+  const open=card.classList.contains('expanded');
+  document.querySelectorAll('.earn-card').forEach(c=>c.classList.remove('expanded'));
+  if(!open)card.classList.add('expanded');
+}
+function earnDeepDive(id){
+  const e=STATE.earnings.find(x=>x.id===id);if(!e)return;
+  const prompt=`CATALYST earnings deep dive on ${e.ticker} (${e.company}) reporting ${e.earningsDate}. Direction: ${e.direction}. Current ${e.currentPrice}, entry ${e.entryPrice}, target ${e.targetPrice}, stop ${e.stopPrice}. Run full analysis: historical earnings reaction pattern, implied vs historical move, options IV crush risk, the specific 7/14/21-day options structure to use with strikes and expiry, and position sizing. Thesis: ${e.thesis}`;
+  if(window.sendPrompt)window.sendPrompt(prompt);
+  else navigator.clipboard.writeText(prompt).then(()=>showToast('Deep dive prompt copied'));
+}
+function earnResolve(id,result){
+  const e=STATE.earnings.find(x=>x.id===id);if(!e)return;
+  e.status='resolved';e.resolution=result;e.resolvedAt=new Date().toISOString();
+  STATE.predictions.push({id,type:'earnings',resolved:true,correct:result==='win',resolvedAt:e.resolvedAt});
+  log('LEARN',`Earnings trade resolved <strong>${result.toUpperCase()}</strong>: ${e.ticker}`);
+  evolve();renderEarnings();renderMetrics();renderEvolution();saveState();
+  showToast(`${e.ticker} marked ${result}`);
+}
+
+(function init(){
+  const key=getKey();
+  if(key){
+    document.getElementById('key-banner').classList.add('hidden');
+    document.getElementById('api-key-input').value='sk-ant-***';
+    updateStatusReady();
+  }else{
+    updateStatusIdle();
+  }
+  loadState();
+  // Load settings into UI
+  const {interval,autosim,evo,alert:al,sector,impact,sims,maxcat}=STATE.settings;
+  document.getElementById('set-interval').value=interval;
+  document.getElementById('set-autosim').checked=autosim;
+  document.getElementById('set-evo').checked=evo;
+  document.getElementById('set-alert').checked=al;
+  document.getElementById('set-sector').value=sector;
+  document.getElementById('set-impact').value=impact;
+  document.getElementById('set-sims').value=sims;
+  document.getElementById('set-maxcat').value=maxcat;
+  log('LEARN','CATALYST v1.5 initialized. Earnings trade engine + openFDA + Haiku 4.5.');
+  log('SCAN',`Monitoring ${Object.keys(STATE.watchlist).length} tickers across ${STATE.catalysts.length} active catalysts.`);
+})();
+</script>
+</body>
+</html>
